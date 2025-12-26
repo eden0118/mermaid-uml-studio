@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { EditorConfig, PreviewConfig, Theme } from '@/types';
+import { EditorConfig, PreviewConfig, Theme } from '@/types/types';
 import { X, Type, Palette } from 'lucide-react';
 
 interface SettingsModalProps {

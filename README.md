@@ -25,6 +25,35 @@ npm run dev
 
 Next.js 15, TypeScript, Tailwind CSS v3, Mermaid.js, Marked
 
+## Project Structure
+
+```
+mermaid-uml-studio/
+├── app/                # Next.js App Router
+│   ├── layout.tsx      # Root layout
+│   ├── page.tsx        # Landing page (/)
+│   ├── mermaid/        # Mermaid editor route
+│   │   └── page.tsx    # /mermaid
+│   └── markdown/       # Markdown editor route
+│       └── page.tsx    # /markdown
+├── components/         # React components
+│   ├── LandingPage.tsx
+│   ├── MermaidPreview.tsx
+│   ├── MarkdownPreview.tsx
+│   ├── Toolbar.tsx
+│   └── SettingsModal.tsx
+├── hooks/              # Custom React hooks
+│   └── useGoogleDrive.ts
+├── lib/                # Utilities and constants
+│   └── constants.ts
+├── types/              # TypeScript type definitions
+│   └── types.ts
+├── styles/             # Global styles
+│   └── globals.css
+├── public/             # Static assets
+└── .env.local          # Environment variables (optional)
+```
+
 ## Environment (Optional)
 
 ```env

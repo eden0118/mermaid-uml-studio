@@ -14,8 +14,8 @@ import {
   Home,
   Settings,
 } from 'lucide-react';
-import { AppStatus, Theme, ViewMode } from '@/types';
-import { UML_TEMPLATES } from '@/constants';
+import { AppStatus, Theme, ViewMode } from '@/types/types';
+import { UML_TEMPLATES } from '@/lib/constants';
 
 interface ToolbarProps {
   fileName: string;

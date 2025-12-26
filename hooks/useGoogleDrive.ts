@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { SCOPES, DISCOVERY_DOCS, MARKDOWN_MIME } from '@/constants';
-import { FileData } from '@/types';
+import { SCOPES, DISCOVERY_DOCS, MARKDOWN_MIME } from '@/lib/constants';
+import { FileData } from '@/types/types';
 
 declare global {
   interface Window {
@@ -173,3 +173,5 @@ export const useGoogleDrive = () => {
     pickFile,
   };
 };
+
+export default useGoogleDrive;

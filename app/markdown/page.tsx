@@ -1,12 +1,13 @@
+'use client';
+
 import React, { useState, useEffect, useRef } from 'react';
-import Head from 'next/head';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import MarkdownPreview from '@/components/MarkdownPreview';
 import Toolbar from '@/components/Toolbar';
 import SettingsModal from '@/components/SettingsModal';
-import { DEFAULT_MARKDOWN_CODE } from '@/constants';
-import { useGoogleDrive } from '@/hooks/useGoogleDrive';
-import { AppStatus, Theme, EditorConfig, PreviewConfig } from '@/types';
+import { DEFAULT_MARKDOWN_CODE } from '@/lib/constants';
+import useGoogleDrive from '@/hooks/useGoogleDrive';
+import { AppStatus, Theme, EditorConfig, PreviewConfig } from '@/types/types';
 
 export default function MarkdownPage() {
   const router = useRouter();
@@ -130,85 +131,79 @@ export default function MarkdownPage() {
   };
 
   return (
-    <>
-      <Head>
-        <title>Markdown Editor - Mermaid UML Studio</title>
-        <meta name="description" content="Write and preview Markdown documents" />
-      </Head>
-      <div className="flex h-screen flex-col bg-white transition-colors duration-200 dark:bg-gray-900">
-        {/* Editor Layout: Left Panel (Code) & Right Panel (Preview) */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* Left Panel: Editor */}
-          <div className="relative z-10 flex w-1/2 flex-col border-r border-gray-200 bg-white shadow-xl transition-colors duration-200 dark:border-gray-700 dark:bg-gray-900">
-            <Toolbar
-              fileName={fileName}
-              setFileName={setFileName}
-              onLoadLocal={handleLoadLocal}
-              onSaveLocal={handleSaveLocal}
-              onGoogleLogin={login}
-              onSaveToDrive={handleSaveToDrive}
-              onLoadFromDrive={handleLoadFromDrive}
-              isDriveConnected={isDriveConnected}
-              status={status}
-              theme={theme}
-              toggleTheme={toggleTheme}
-              autoUpdate={autoUpdate}
-              toggleAutoUpdate={() => setAutoUpdate(!autoUpdate)}
-              onSelectTemplate={handleSelectTemplate}
-              viewMode="markdown"
-              onGoHome={() => router.push('/')}
-              onOpenSettings={() => setIsSettingsOpen(true)}
-            />
+    <div className="flex h-screen flex-col bg-white transition-colors duration-200 dark:bg-gray-900">
+      {/* Editor Layout: Left Panel (Code) & Right Panel (Preview) */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Panel: Editor */}
+        <div className="relative z-10 flex w-1/2 flex-col border-r border-gray-200 bg-white shadow-xl transition-colors duration-200 dark:border-gray-700 dark:bg-gray-900">
+          <Toolbar
+            fileName={fileName}
+            setFileName={setFileName}
+            onLoadLocal={handleLoadLocal}
+            onSaveLocal={handleSaveLocal}
+            onGoogleLogin={login}
+            onSaveToDrive={handleSaveToDrive}
+            onLoadFromDrive={handleLoadFromDrive}
+            isDriveConnected={isDriveConnected}
+            status={status}
+            theme={theme}
+            toggleTheme={toggleTheme}
+            autoUpdate={autoUpdate}
+            toggleAutoUpdate={() => setAutoUpdate(!autoUpdate)}
+            onSelectTemplate={handleSelectTemplate}
+            viewMode="markdown"
+            onGoHome={() => router.push('/')}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+          />
 
-            <div className="relative flex flex-1">
-              {/* Line Numbers */}
-              <div
-                id="line-numbers"
-                className="w-10 select-none overflow-hidden border-r border-gray-100 bg-gray-50 pb-4 pr-2 pt-4 text-right font-mono text-xs text-gray-400 transition-colors duration-200 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-600"
-                style={{
-                  lineHeight: editorConfig.lineHeight,
-                  fontSize: `${editorConfig.fontSize}px`,
-                }}
-              >
-                {Array.from({ length: lineCount }, (_, i) => i + 1).map((num) => (
-                  <div key={num}>{num}</div>
-                ))}
-              </div>
-
-              {/* Text Area */}
-              <textarea
-                ref={textareaRef}
-                className="h-full flex-1 resize-none bg-white p-4 text-gray-800 outline-none transition-colors duration-200 dark:bg-[#0d1117] dark:text-gray-300"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                onScroll={handleScroll}
-                spellCheck={false}
-                placeholder="Enter Markdown here..."
-                style={{
-                  fontFamily: editorConfig.fontFamily,
-                  fontSize: `${editorConfig.fontSize}px`,
-                  lineHeight: editorConfig.lineHeight,
-                }}
-              />
+          <div className="relative flex flex-1">
+            {/* Line Numbers */}
+            <div
+              id="line-numbers"
+              className="w-10 select-none overflow-hidden border-r border-gray-200 bg-gray-50 pb-4 pr-2 pt-4 text-right font-mono text-xs text-gray-400 transition-colors duration-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500"
+              style={{
+                lineHeight: editorConfig.lineHeight,
+                fontSize: `${editorConfig.fontSize}px`,
+              }}
+            >
+              {Array.from({ length: lineCount }, (_, i) => i + 1).map((num) => (
+                <div key={num}>{num}</div>
+              ))}
             </div>
-          </div>
 
-          {/* Right Panel: Preview */}
-          <div className="h-full w-1/2 bg-gray-50 transition-colors duration-200 dark:bg-gray-950">
-            <MarkdownPreview code={code} theme={theme} previewConfig={previewConfig} />
+            {/* Text Area */}
+            <textarea
+              ref={textareaRef}
+              className="h-full flex-1 resize-none bg-white p-4 text-gray-800 outline-none transition-colors duration-200 dark:bg-gray-900 dark:text-gray-100"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              onScroll={handleScroll}
+              spellCheck={false}
+              placeholder="Enter Markdown here..."
+              style={{
+                fontFamily: editorConfig.fontFamily,
+                fontSize: `${editorConfig.fontSize}px`,
+                lineHeight: editorConfig.lineHeight,
+              }}
+            />
           </div>
         </div>
 
-        <SettingsModal
-          isOpen={isSettingsOpen}
-          onClose={() => setIsSettingsOpen(false)}
-          editorConfig={editorConfig}
-          setEditorConfig={setEditorConfig}
-          previewConfig={previewConfig}
-          setPreviewConfig={setPreviewConfig}
-          theme={theme}
-        />
+        {/* Right Panel: Preview */}
+        <div className="h-full w-1/2 bg-gray-50 transition-colors duration-200 dark:bg-gray-900">
+          <MarkdownPreview code={code} theme={theme} previewConfig={previewConfig} />
+        </div>
       </div>
-    </>
+
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        editorConfig={editorConfig}
+        setEditorConfig={setEditorConfig}
+        previewConfig={previewConfig}
+        setPreviewConfig={setPreviewConfig}
+        theme={theme}
+      />
+    </div>
   );
 }

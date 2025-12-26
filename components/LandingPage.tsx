@@ -1,6 +1,6 @@
 import React from 'react';
 import { FileText, Workflow, ArrowRight } from 'lucide-react';
-import { ViewMode } from '@/types';
+import { ViewMode } from '@/types/types';
 
 interface LandingPageProps {
   onSelectMode: (mode: ViewMode) => void;

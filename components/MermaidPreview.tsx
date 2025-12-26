@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import mermaid from 'mermaid';
 import { ZoomIn, ZoomOut, RotateCcw, Download } from 'lucide-react';
-import { Theme } from '@/types';
+import { Theme } from '@/types/types';
 
 interface MermaidPreviewProps {
   code: string;
@@ -27,11 +27,7 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = ({ code, theme }) => {
       securityLevel: 'loose',
       fontFamily: 'ui-sans-serif, system-ui, sans-serif',
       logLevel: 'error',
-      suppressErrors: false,
     });
-
-    // Trigger re-render by clearing svg first
-    setSvgContent('');
   }, [theme]);
 
   useEffect(() => {
@@ -54,6 +50,28 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = ({ code, theme }) => {
         // Parse and render the diagram
         const { svg } = await mermaid.render(id, code.trim());
         setSvgContent(svg);
+
+        // Auto-fit diagram to container after rendering
+        setTimeout(() => {
+          if (containerRef.current) {
+            const container = containerRef.current;
+            const svgElement = container.querySelector('svg');
+            if (svgElement) {
+              const containerWidth = container.clientWidth;
+              const containerHeight = container.clientHeight;
+              const svgWidth = svgElement.getBBox().width;
+              const svgHeight = svgElement.getBBox().height;
+
+              // Calculate scale to fit with padding
+              const scaleX = (containerWidth * 0.9) / svgWidth;
+              const scaleY = (containerHeight * 0.9) / svgHeight;
+              const autoScale = Math.min(scaleX, scaleY, 1.5); // Max scale 1.5
+
+              setScale(autoScale);
+              setPosition({ x: 0, y: 0 });
+            }
+          }
+        }, 100);
       } catch (err: any) {
         console.error('Mermaid Render Error:', err);
         console.error('Failed code:', code);
@@ -67,7 +85,7 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = ({ code, theme }) => {
     }, 300); // Debounce rendering
 
     return () => clearTimeout(timeoutId);
-  }, [code]);
+  }, [code, theme]); // Re-render on code or theme change
 
   // Zoom handlers
   const handleZoomIn = () => setScale((prev) => Math.min(prev + 0.2, 3));
@@ -108,12 +126,12 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = ({ code, theme }) => {
   };
 
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden bg-gray-50 transition-colors duration-200 dark:bg-gray-950">
+    <div className="relative flex h-full w-full flex-col overflow-hidden bg-gray-50 transition-colors duration-200 dark:bg-gray-900">
       {/* Dot Pattern Background */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.4] dark:opacity-[0.2]"
+        className="pointer-events-none absolute inset-0 opacity-[0.3] dark:opacity-[0.15]"
         style={{
-          backgroundImage: `radial-gradient(${theme === 'dark' ? '#cbd5e1' : '#94a3b8'} 1px, transparent 1px)`,
+          backgroundImage: `radial-gradient(${theme === 'dark' ? '#6b7280' : '#94a3b8'} 1px, transparent 1px)`,
           backgroundSize: '20px 20px',
         }}
       />
