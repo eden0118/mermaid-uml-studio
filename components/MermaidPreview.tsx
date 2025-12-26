@@ -26,6 +26,8 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = ({ code, theme }) => {
       theme: theme === 'dark' ? 'dark' : 'default',
       securityLevel: 'loose',
       fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+      logLevel: 'error',
+      suppressErrors: false,
     });
 
     // Trigger re-render by clearing svg first
@@ -34,26 +36,38 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = ({ code, theme }) => {
 
   useEffect(() => {
     const renderDiagram = async () => {
+      // Skip rendering if code is empty
+      if (!code || !code.trim()) {
+        setSvgContent('');
+        setError(null);
+        return;
+      }
+
       try {
         setError(null);
         // We need a unique ID for each render to avoid caching issues in mermaid
         const id = `mermaid-${Date.now()}`;
 
-        // Ensure the element is clean before render attempt if possible, though mermaid.render handles new ID
-        const { svg } = await mermaid.render(id, code);
+        // Debug: log the code being rendered
+        console.log('Rendering Mermaid code:', code);
+
+        // Parse and render the diagram
+        const { svg } = await mermaid.render(id, code.trim());
         setSvgContent(svg);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Mermaid Render Error:', err);
-        setError('Syntax Error: Invalid Mermaid Code');
+        console.error('Failed code:', code);
+        const errorMessage = err?.message || 'Syntax Error: Invalid Mermaid Code';
+        setError(errorMessage);
       }
     };
 
     const timeoutId = setTimeout(() => {
       renderDiagram();
-    }, 500); // Debounce rendering
+    }, 300); // Debounce rendering
 
     return () => clearTimeout(timeoutId);
-  }, [code, theme]); // Re-render on code or theme change
+  }, [code]);
 
   // Zoom handlers
   const handleZoomIn = () => setScale((prev) => Math.min(prev + 0.2, 3));
@@ -105,10 +119,10 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = ({ code, theme }) => {
       />
 
       {/* Top Floating Toolbar */}
-      <div className="absolute top-4 right-4 z-10 flex space-x-2">
+      <div className="absolute right-4 top-4 z-10 flex space-x-2">
         <button
           onClick={handleExportSvg}
-          className="hover:text-primary-600 dark:hover:text-primary-400 rounded-lg border border-gray-200 bg-white p-2 text-gray-600 shadow-sm transition-colors dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+          className="rounded-lg border border-gray-200 bg-white p-2 text-gray-600 shadow-sm transition-colors hover:text-primary-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:text-primary-400"
           title="Download SVG"
         >
           <Download size={18} />
@@ -146,7 +160,7 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = ({ code, theme }) => {
       </div>
 
       {/* Bottom Right Zoom Controls */}
-      <div className="absolute right-6 bottom-6 z-10 flex items-center space-x-1 rounded-lg border border-gray-200 bg-white p-1 shadow-md dark:border-gray-700 dark:bg-gray-800">
+      <div className="absolute bottom-6 right-6 z-10 flex items-center space-x-1 rounded-lg border border-gray-200 bg-white p-1 shadow-md dark:border-gray-700 dark:bg-gray-800">
         <button
           onClick={handleResetZoom}
           className="rounded p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"

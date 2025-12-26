@@ -1,19 +1,33 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Mermaid UML Studio
 
-# Run and deploy your AI Studio app
+All-in-one editor for Mermaid diagrams and Markdown documentation with Google Drive integration.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/drive/15ZWlnRl0gZPnT9LyZXx7CscPTy8HbGkl
+- 📊 Mermaid Diagram Editor - Flowcharts, sequence diagrams, class diagrams
+- 📝 Markdown Editor - Documentation with live preview
+- 🎨 Dark Mode Support - Auto-switch based on system preferences
+- 💾 Google Drive Integration - Save/load files (optional)
+- 🔄 Auto-Update Preview - Real-time preview
+- 📋 Templates - Quick start templates
+- ⚙️ Customizable - Font size, line height, custom CSS
+- 🔍 Zoom & Pan - Interactive diagram viewing
 
-## Run Locally
+## Quick Start
 
-**Prerequisites:** Node.js
+```bash
+npm install
+npm run dev
+# Open http://localhost:3700
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Tech Stack
+
+Next.js 15, TypeScript, Tailwind CSS v3, Mermaid.js, Marked
+
+## Environment (Optional)
+
+```env
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=...
+NEXT_PUBLIC_GOOGLE_API_KEY=...
+```

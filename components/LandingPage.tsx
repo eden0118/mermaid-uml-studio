@@ -10,10 +10,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSelectMode }) => {
   return (
     <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-6 dark:from-gray-900 dark:to-gray-950">
       <div className="mb-12 text-center">
-        <div className="bg-primary-600 mb-6 inline-flex items-center justify-center rounded-2xl p-4 shadow-lg">
+        <div className="mb-6 inline-flex items-center justify-center rounded-2xl bg-primary-600 p-4 shadow-lg">
           <span className="text-4xl font-bold text-white">M</span>
         </div>
-        <h1 className="mb-4 text-4xl font-extrabold tracking-tight text-gray-900 md:text-5xl dark:text-white">
+        <h1 className="mb-4 text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white md:text-5xl">
           Mermaid <span className="text-primary-500">Studio</span>
         </h1>
         <p className="mx-auto max-w-lg text-lg text-gray-600 dark:text-gray-400">
@@ -26,16 +26,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSelectMode }) => {
         {/* Markdown Option */}
         <button
           onClick={() => onSelectMode('markdown')}
-          className="group hover:border-primary-500 dark:hover:border-primary-500 relative flex flex-col items-center rounded-2xl border border-gray-200 bg-white p-8 shadow-xl transition-all duration-300 hover:-translate-y-1 dark:border-gray-700 dark:bg-gray-800"
+          className="group relative flex flex-col items-center rounded-2xl border border-gray-200 bg-white p-8 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-primary-500"
         >
-          <div className="bg-primary-100 dark:bg-primary-900/30 mb-6 flex h-16 w-16 items-center justify-center rounded-2xl transition-transform duration-300 group-hover:scale-110">
+          <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-100 transition-transform duration-300 group-hover:scale-110 dark:bg-primary-900/30">
             <FileText size={32} className="text-primary-600 dark:text-primary-400" />
           </div>
           <h2 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">Markdown Docs</h2>
           <p className="mb-6 text-center text-gray-500 dark:text-gray-400">
             Write documentation with real-time preview. Best for notes, specs, and READMEs.
           </p>
-          <div className="text-primary-600 dark:text-primary-400 flex items-center text-sm font-semibold group-hover:underline">
+          <div className="flex items-center text-sm font-semibold text-primary-600 group-hover:underline dark:text-primary-400">
             Open Editor <ArrowRight size={16} className="ml-2" />
           </div>
         </button>
@@ -43,16 +43,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSelectMode }) => {
         {/* Mermaid Option */}
         <button
           onClick={() => onSelectMode('mermaid')}
-          className="group hover:border-primary-500 dark:hover:border-primary-500 relative flex flex-col items-center rounded-2xl border border-gray-200 bg-white p-8 shadow-xl transition-all duration-300 hover:-translate-y-1 dark:border-gray-700 dark:bg-gray-800"
+          className="group relative flex flex-col items-center rounded-2xl border border-gray-200 bg-white p-8 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-primary-500"
         >
-          <div className="bg-primary-100 dark:bg-primary-900/30 mb-6 flex h-16 w-16 items-center justify-center rounded-2xl transition-transform duration-300 group-hover:scale-110">
+          <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-100 transition-transform duration-300 group-hover:scale-110 dark:bg-primary-900/30">
             <Workflow size={32} className="text-primary-600 dark:text-primary-400" />
           </div>
           <h2 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">Mermaid Charts</h2>
           <p className="mb-6 text-center text-gray-500 dark:text-gray-400">
             Create complex UML diagrams, flowcharts, and graphs using simple text syntax.
           </p>
-          <div className="text-primary-600 dark:text-primary-400 flex items-center text-sm font-semibold group-hover:underline">
+          <div className="flex items-center text-sm font-semibold text-primary-600 group-hover:underline dark:text-primary-400">
             Open Studio <ArrowRight size={16} className="ml-2" />
           </div>
         </button>

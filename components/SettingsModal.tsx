@@ -45,7 +45,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             onClick={() => setActiveTab('editor')}
             className={`flex flex-1 items-center justify-center space-x-2 py-3 text-sm font-medium transition-colors ${
               activeTab === 'editor'
-                ? 'text-primary-600 border-primary-500 border-b-2 bg-white dark:bg-gray-800'
+                ? 'border-b-2 border-primary-500 bg-white text-primary-600 dark:bg-gray-800'
                 : 'bg-gray-50 text-gray-600 hover:bg-gray-100 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800'
             }`}
           >
@@ -56,7 +56,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             onClick={() => setActiveTab('preview')}
             className={`flex flex-1 items-center justify-center space-x-2 py-3 text-sm font-medium transition-colors ${
               activeTab === 'preview'
-                ? 'text-primary-600 border-primary-500 border-b-2 bg-white dark:bg-gray-800'
+                ? 'border-b-2 border-primary-500 bg-white text-primary-600 dark:bg-gray-800'
                 : 'bg-gray-50 text-gray-600 hover:bg-gray-100 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800'
             }`}
           >
@@ -81,7 +81,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   onChange={(e) =>
                     setEditorConfig({ ...editorConfig, fontSize: parseInt(e.target.value) })
                   }
-                  className="accent-primary-600 w-full"
+                  className="w-full accent-primary-600"
                 />
               </div>
 
@@ -98,7 +98,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   onChange={(e) =>
                     setEditorConfig({ ...editorConfig, lineHeight: parseFloat(e.target.value) })
                   }
-                  className="accent-primary-600 w-full"
+                  className="w-full accent-primary-600"
                 />
               </div>
 
@@ -109,7 +109,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 <select
                   value={editorConfig.fontFamily}
                   onChange={(e) => setEditorConfig({ ...editorConfig, fontFamily: e.target.value })}
-                  className="focus:ring-primary-500 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-700 outline-none focus:ring-2 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"
+                  className="w-full rounded-md border border-gray-300 bg-white p-2 text-gray-700 outline-none focus:ring-2 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"
                 >
                   <option value="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace">
                     Monospace (Default)
@@ -153,7 +153,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     setPreviewConfig({ ...previewConfig, customCss: e.target.value })
                   }
                   placeholder={`.prose h1 { color: #10b981; }\n.prose p { font-size: 1.1rem; }`}
-                  className="focus:ring-primary-500 h-48 w-full resize-none rounded-md border border-gray-300 bg-white p-3 font-mono text-sm text-gray-800 outline-none focus:ring-2 dark:border-gray-600 dark:bg-gray-950 dark:text-gray-200"
+                  className="h-48 w-full resize-none rounded-md border border-gray-300 bg-white p-3 font-mono text-sm text-gray-800 outline-none focus:ring-2 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-950 dark:text-gray-200"
                 />
               </div>
             </div>
@@ -163,7 +163,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="flex justify-end border-t border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
           <button
             onClick={onClose}
-            className="bg-primary-600 hover:bg-primary-700 rounded-md px-4 py-2 font-medium text-white transition-colors"
+            className="rounded-md bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-700"
           >
             Done
           </button>

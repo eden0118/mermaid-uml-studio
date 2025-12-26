@@ -64,7 +64,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         {/* Home Button */}
         <button
           onClick={onGoHome}
-          className="hover:text-primary-600 dark:hover:text-primary-400 rounded-md p-1.5 text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+          className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-primary-400"
           title="Back to Home"
         >
           <Home size={18} />
@@ -97,7 +97,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             {showTemplates && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowTemplates(false)}></div>
-                <div className="animate-in fade-in zoom-in-95 absolute top-full left-0 z-20 mt-2 w-48 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-xl duration-100 dark:border-gray-700 dark:bg-gray-800">
+                <div className="animate-in fade-in zoom-in-95 absolute left-0 top-full z-20 mt-2 w-48 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-xl duration-100 dark:border-gray-700 dark:bg-gray-800">
                   {UML_TEMPLATES.map((t) => (
                     <button
                       key={t.name}
@@ -105,7 +105,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                         onSelectTemplate(t.code);
                         setShowTemplates(false);
                       }}
-                      className="hover:bg-primary-50 hover:text-primary-600 dark:hover:text-primary-400 w-full px-4 py-2 text-left text-xs text-gray-700 transition-colors dark:text-gray-300 dark:hover:bg-gray-700"
+                      className="w-full px-4 py-2 text-left text-xs text-gray-700 transition-colors hover:bg-primary-50 hover:text-primary-600 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-primary-400"
                     >
                       {t.name}
                     </button>
@@ -127,7 +127,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             className={`relative h-5 w-9 rounded-full transition-colors duration-200 ${autoUpdate ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'}`}
           >
             <div
-              className={`absolute top-0.5 left-0.5 h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${autoUpdate ? 'translate-x-4' : 'translate-x-0'}`}
+              className={`absolute left-0.5 top-0.5 h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${autoUpdate ? 'translate-x-4' : 'translate-x-0'}`}
             />
           </div>
           <span className="text-xs font-medium text-gray-600 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-200">
@@ -142,7 +142,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           type="text"
           value={fileName}
           onChange={(e) => setFileName(e.target.value)}
-          className="focus:border-primary-500 w-48 border-gray-300 bg-transparent py-1 text-xs text-gray-600 transition-colors outline-none hover:border-b dark:border-gray-600 dark:text-gray-300"
+          className="w-48 border-gray-300 bg-transparent py-1 text-xs text-gray-600 outline-none transition-colors hover:border-b focus:border-primary-500 dark:border-gray-600 dark:text-gray-300"
         />
       </div>
 
@@ -164,7 +164,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         {/* File Actions Group */}
         <div className="flex items-center space-x-1 rounded-lg border border-gray-200 bg-gray-100 p-1 dark:border-gray-700 dark:bg-gray-800">
           <label
-            className="hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer rounded-md p-1.5 text-gray-600 transition-all hover:bg-white dark:text-gray-400 dark:hover:bg-gray-700"
+            className="cursor-pointer rounded-md p-1.5 text-gray-600 transition-all hover:bg-white hover:text-primary-600 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-primary-400"
             title="Open .md File"
           >
             <Upload size={16} />
@@ -172,7 +172,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           </label>
           <button
             onClick={onSaveLocal}
-            className="hover:text-primary-600 dark:hover:text-primary-400 rounded-md p-1.5 text-gray-600 transition-all hover:bg-white dark:text-gray-400 dark:hover:bg-gray-700"
+            className="rounded-md p-1.5 text-gray-600 transition-all hover:bg-white hover:text-primary-600 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-primary-400"
             title="Save as .md"
           >
             <Download size={16} />
@@ -184,7 +184,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           {!isDriveConnected ? (
             <button
               onClick={onGoogleLogin}
-              className="hover:text-primary-600 dark:hover:text-primary-400 flex items-center space-x-1 px-2 py-1 text-xs text-gray-600 transition-colors dark:text-gray-400"
+              className="flex items-center space-x-1 px-2 py-1 text-xs text-gray-600 transition-colors hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
             >
               <LogIn size={14} />
               <span className="hidden sm:inline">Drive</span>
