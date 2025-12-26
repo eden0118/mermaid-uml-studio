@@ -6,7 +6,7 @@ export interface FileData {
 
 export enum SaveLocation {
   LOCAL = 'LOCAL',
-  DRIVE = 'DRIVE'
+  DRIVE = 'DRIVE',
 }
 
 export enum AppStatus {
@@ -14,7 +14,7 @@ export enum AppStatus {
   LOADING = 'LOADING',
   SAVING = 'SAVING',
   ERROR = 'ERROR',
-  SUCCESS = 'SUCCESS'
+  SUCCESS = 'SUCCESS',
 }
 
 export interface GoogleDriveConfig {
@@ -22,7 +22,7 @@ export interface GoogleDriveConfig {
   apiKey: string;
 }
 
-// Minimal type definition for the global gapi object if needed, 
+// Minimal type definition for the global gapi object if needed,
 // though we usually rely on window.gapi generic access or @types/gapi
 export interface DriveFile {
   id: string;

@@ -85,7 +85,7 @@ graph LR
 export const UML_TEMPLATES = [
   {
     name: 'Flowchart',
-    code: DEFAULT_MERMAID_CODE
+    code: DEFAULT_MERMAID_CODE,
   },
   {
     name: 'Sequence Diagram',
@@ -99,7 +99,7 @@ export const UML_TEMPLATES = [
     Note right of John: Rational thoughts <br/>prevail!
     John-->>Alice: Great!
     John->>Bob: How about you?
-    Bob-->>John: Jolly good!`
+    Bob-->>John: Jolly good!`,
   },
   {
     name: 'State Diagram',
@@ -109,7 +109,7 @@ export const UML_TEMPLATES = [
     Still --> Moving
     Moving --> Still
     Moving --> Crash
-    Crash --> [*]`
+    Crash --> [*]`,
   },
   {
     name: 'Class Diagram',
@@ -133,14 +133,14 @@ export const UML_TEMPLATES = [
     class Zebra{
       +bool is_wild
       +run()
-    }`
+    }`,
   },
   {
     name: 'ER Diagram',
     code: `erDiagram
     CUSTOMER ||--o{ ORDER : places
     ORDER ||--|{ LINE-ITEM : contains
-    CUSTOMER }|..|{ DELIVERY-ADDRESS : uses`
+    CUSTOMER }|..|{ DELIVERY-ADDRESS : uses`,
   },
   {
     name: 'Gantt Chart',
@@ -152,14 +152,14 @@ export const UML_TEMPLATES = [
     Another task     :after a1  , 20d
     section Another
     Task in sec      :2014-01-12  , 12d
-    another task      : 24d`
+    another task      : 24d`,
   },
   {
     name: 'Pie Chart',
     code: `pie title Pets adopted by volunteers
     "Dogs" : 386
     "Cats" : 85
-    "Rats" : 15`
+    "Rats" : 15`,
   },
   {
     name: 'Mindmap',
@@ -176,15 +176,10 @@ export const UML_TEMPLATES = [
         Uses
             Creative techniques
             Strategic planning
-            Argument mapping`
-  }
+            Argument mapping`,
+  },
 ];
 
 export const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 export const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
-
-// NOTE: In a real production app, these should be environment variables.
-// For this demo to work with Drive, the user must input their own Client ID/API Key in the UI
-// or we assume they are provided via process.env in a secure build environment.
-export const DEMO_DRIVE_FOLDER_MIME = 'application/vnd.google-apps.folder';
 export const MARKDOWN_MIME = 'text/markdown';

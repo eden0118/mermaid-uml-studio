@@ -1,24 +1,25 @@
-import React, { useState, useEffect, useRef } from 'react';
-import MermaidPreview from './components/MermaidPreview';
-import MarkdownPreview from './components/MarkdownPreview';
-import Toolbar from './components/Toolbar';
-import LandingPage from './components/LandingPage';
-import SettingsModal from './components/SettingsModal';
-import { DEFAULT_MERMAID_CODE, DEFAULT_MARKDOWN_CODE } from './constants';
-import { useGoogleDrive } from './hooks/useGoogleDrive';
-import { generateMermaidCode } from './services/geminiService';
-import { AppStatus, Theme, ViewMode, EditorConfig, PreviewConfig } from './types';
+'use client';
 
-const App: React.FC = () => {
+import React, { useState, useEffect, useRef } from 'react';
+import MermaidPreview from '@/components/MermaidPreview';
+import MarkdownPreview from '@/components/MarkdownPreview';
+import Toolbar from '@/components/Toolbar';
+import LandingPage from '@/components/LandingPage';
+import SettingsModal from '@/components/SettingsModal';
+import { DEFAULT_MERMAID_CODE, DEFAULT_MARKDOWN_CODE } from '@/constants';
+import { useGoogleDrive } from '@/hooks/useGoogleDrive';
+import { AppStatus, Theme, ViewMode, EditorConfig, PreviewConfig } from '@/types';
+
+export default function Home() {
   // State - Default to Markdown mode with cheat sheet loaded
   const [viewMode, setViewMode] = useState<ViewMode>('markdown');
   const [code, setCode] = useState<string>(DEFAULT_MARKDOWN_CODE);
   const [fileName, setFileName] = useState<string>('document.md');
-  
+
   const [status, setStatus] = useState<AppStatus>(AppStatus.IDLE);
   const [theme, setTheme] = useState<Theme>('dark');
   const [autoUpdate, setAutoUpdate] = useState(true);
-  
+
   // Settings State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [editorConfig, setEditorConfig] = useState<EditorConfig>({
@@ -35,7 +36,7 @@ const App: React.FC = () => {
   // Initialize Theme
   useEffect(() => {
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-       setTheme('light');
+      setTheme('light');
     }
   }, []);
 
@@ -49,22 +50,22 @@ const App: React.FC = () => {
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
 
   // Switch View Handlers
   const handleSelectMode = (mode: ViewMode) => {
     setViewMode(mode);
     if (mode === 'mermaid') {
-        if (!code.trim() || code === DEFAULT_MARKDOWN_CODE) {
-            setCode(DEFAULT_MERMAID_CODE);
-        }
-        setFileName('diagram.md');
+      if (!code.trim() || code === DEFAULT_MARKDOWN_CODE) {
+        setCode(DEFAULT_MERMAID_CODE);
+      }
+      setFileName('diagram.md');
     } else if (mode === 'markdown') {
-        if (!code.trim() || code === DEFAULT_MERMAID_CODE) {
-            setCode(DEFAULT_MARKDOWN_CODE);
-        }
-        setFileName('document.md');
+      if (!code.trim() || code === DEFAULT_MERMAID_CODE) {
+        setCode(DEFAULT_MARKDOWN_CODE);
+      }
+      setFileName('document.md');
     }
   };
 
@@ -72,7 +73,7 @@ const App: React.FC = () => {
   const handleLoadLocal = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
     const reader = new FileReader();
     reader.onload = (event) => {
       const content = event.target?.result as string;
@@ -112,32 +113,15 @@ const App: React.FC = () => {
 
   const handleLoadFromDrive = async () => {
     try {
-        setStatus(AppStatus.LOADING);
-        const fileData = await pickFile();
-        if (fileData) {
-            setCode(fileData.content);
-            setFileName(fileData.name);
-        }
-    } catch (e) {
-        console.error(e);
-        alert('Failed to load from Drive.');
-    } finally {
-        setStatus(AppStatus.IDLE);
-    }
-  };
-
-  // AI Handler
-  const handleGenerateAI = async (prompt: string) => {
-    try {
       setStatus(AppStatus.LOADING);
-      // We are only using Gemini for Mermaid generation currently based on the prompt instructions
-      const generatedCode = await generateMermaidCode(prompt);
-      setCode(generatedCode);
-      setStatus(AppStatus.SUCCESS);
+      const fileData = await pickFile();
+      if (fileData) {
+        setCode(fileData.content);
+        setFileName(fileData.name);
+      }
     } catch (e) {
       console.error(e);
-      alert('AI Generation failed. Ensure API_KEY is set.');
-      setStatus(AppStatus.ERROR);
+      alert('Failed to load from Drive.');
     } finally {
       setStatus(AppStatus.IDLE);
     }
@@ -158,10 +142,10 @@ const App: React.FC = () => {
 
   const handleScroll = () => {
     if (textareaRef.current) {
-        const lineNumbers = document.getElementById('line-numbers');
-        if (lineNumbers) {
-            lineNumbers.scrollTop = textareaRef.current.scrollTop;
-        }
+      const lineNumbers = document.getElementById('line-numbers');
+      if (lineNumbers) {
+        lineNumbers.scrollTop = textareaRef.current.scrollTop;
+      }
     }
   };
 
@@ -170,15 +154,12 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-white dark:bg-gray-900 transition-colors duration-200">
-      
+    <div className="flex h-screen flex-col bg-white transition-colors duration-200 dark:bg-gray-900">
       {/* Editor Layout: Left Panel (Code) & Right Panel (Preview) */}
-      <div className="flex-1 flex overflow-hidden">
-        
+      <div className="flex flex-1 overflow-hidden">
         {/* Left Panel: Editor */}
-        <div className="w-1/2 flex flex-col border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 transition-colors duration-200 relative z-10 shadow-xl">
-           
-           <Toolbar 
+        <div className="relative z-10 flex w-1/2 flex-col border-r border-gray-200 bg-white shadow-xl transition-colors duration-200 dark:border-gray-700 dark:bg-gray-900">
+          <Toolbar
             fileName={fileName}
             setFileName={setFileName}
             onLoadLocal={handleLoadLocal}
@@ -198,31 +179,33 @@ const App: React.FC = () => {
             onOpenSettings={() => setIsSettingsOpen(true)}
           />
 
-          <div className="flex-1 relative flex">
+          <div className="relative flex flex-1">
             {/* Line Numbers */}
-            <div 
-                id="line-numbers"
-                className="w-10 pt-4 pb-4 bg-gray-50 dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 text-right pr-2 text-gray-400 dark:text-gray-600 font-mono text-xs overflow-hidden select-none transition-colors duration-200"
-                style={{
-                    lineHeight: editorConfig.lineHeight,
-                    fontSize: `${editorConfig.fontSize}px`,
-                    // We need to match the padding of the textarea to align correctly
-                }}
+            <div
+              id="line-numbers"
+              className="w-10 overflow-hidden border-r border-gray-100 bg-gray-50 pt-4 pr-2 pb-4 text-right font-mono text-xs text-gray-400 transition-colors duration-200 select-none dark:border-gray-800 dark:bg-gray-900 dark:text-gray-600"
+              style={{
+                lineHeight: editorConfig.lineHeight,
+                fontSize: `${editorConfig.fontSize}px`,
+                // We need to match the padding of the textarea to align correctly
+              }}
             >
-                {Array.from({ length: lineCount }, (_, i) => i + 1).map(num => (
-                    <div key={num}>{num}</div>
-                ))}
+              {Array.from({ length: lineCount }, (_, i) => i + 1).map((num) => (
+                <div key={num}>{num}</div>
+              ))}
             </div>
 
             {/* Text Area */}
             <textarea
               ref={textareaRef}
-              className="flex-1 h-full bg-white dark:bg-[#0d1117] text-gray-800 dark:text-gray-300 p-4 resize-none outline-none transition-colors duration-200"
+              className="h-full flex-1 resize-none bg-white p-4 text-gray-800 transition-colors duration-200 outline-none dark:bg-[#0d1117] dark:text-gray-300"
               value={code}
               onChange={(e) => setCode(e.target.value)}
               onScroll={handleScroll}
               spellCheck={false}
-              placeholder={viewMode === 'mermaid' ? "Enter Mermaid syntax here..." : "Enter Markdown here..."}
+              placeholder={
+                viewMode === 'mermaid' ? 'Enter Mermaid syntax here...' : 'Enter Markdown here...'
+              }
               style={{
                 fontFamily: editorConfig.fontFamily,
                 fontSize: `${editorConfig.fontSize}px`,
@@ -233,25 +216,16 @@ const App: React.FC = () => {
         </div>
 
         {/* Right Panel: Preview */}
-        <div className="w-1/2 h-full bg-gray-50 dark:bg-gray-950 transition-colors duration-200">
-            {viewMode === 'mermaid' ? (
-                <MermaidPreview 
-                    code={autoUpdate ? code : ''} 
-                    theme={theme} 
-                    onGenerateAI={handleGenerateAI}
-                    isProcessing={status === AppStatus.LOADING}
-                />
-            ) : (
-                <MarkdownPreview 
-                    code={code}
-                    theme={theme}
-                    previewConfig={previewConfig}
-                />
-            )}
+        <div className="h-full w-1/2 bg-gray-50 transition-colors duration-200 dark:bg-gray-950">
+          {viewMode === 'mermaid' ? (
+            <MermaidPreview code={autoUpdate ? code : ''} theme={theme} />
+          ) : (
+            <MarkdownPreview code={code} theme={theme} previewConfig={previewConfig} />
+          )}
         </div>
       </div>
 
-      <SettingsModal 
+      <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         editorConfig={editorConfig}
@@ -262,6 +236,4 @@ const App: React.FC = () => {
       />
     </div>
   );
-};
-
-export default App;
+}

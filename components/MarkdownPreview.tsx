@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { marked } from 'marked';
 import mermaid from 'mermaid';
-import { Theme, PreviewConfig } from '../types';
+import { Theme, PreviewConfig } from '@/types';
 
 interface MarkdownPreviewProps {
   code: string;
@@ -25,26 +25,26 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ code, theme, previewC
   // Handle Markdown Parsing + Mermaid Block Detection
   useEffect(() => {
     const parseMarkdown = async () => {
-        // Custom renderer to intercept mermaid code blocks
-        const renderer = new marked.Renderer();
-        const originalCodeRenderer = renderer.code.bind(renderer);
+      // Custom renderer to intercept mermaid code blocks
+      const renderer = new marked.Renderer();
+      const originalCodeRenderer = renderer.code.bind(renderer);
 
-        renderer.code = (codeBlock, language, isEscaped) => {
-            if (language === 'mermaid') {
-                // Return a container with a class we can target later
-                return `<div class="mermaid">${codeBlock}</div>`;
-            }
-            // Fallback to default behavior for other code blocks
-            return originalCodeRenderer(codeBlock, language, isEscaped);
-        };
-
-        try {
-            const html = await marked.parse(code, { renderer });
-            setHtmlContent(html);
-        } catch (e) {
-            console.error("Markdown parsing error", e);
-            setHtmlContent('<p class="text-red-500">Error parsing markdown</p>');
+      renderer.code = (codeBlock, language, isEscaped) => {
+        if (language === 'mermaid') {
+          // Return a container with a class we can target later
+          return `<div class="mermaid">${codeBlock}</div>`;
         }
+        // Fallback to default behavior for other code blocks
+        return originalCodeRenderer(codeBlock, language, isEscaped);
+      };
+
+      try {
+        const html = await marked.parse(code, { renderer });
+        setHtmlContent(html);
+      } catch (e) {
+        console.error('Markdown parsing error', e);
+        setHtmlContent('<p class="text-red-500">Error parsing markdown</p>');
+      }
     };
     parseMarkdown();
   }, [code]);
@@ -52,27 +52,26 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ code, theme, previewC
   // Run Mermaid after HTML is rendered
   useEffect(() => {
     if (containerRef.current) {
-        // Find all mermaid divs that haven't been processed yet
-        // Note: mermaid.run handles finding elements automatically if passed selector
-        mermaid.run({
-            nodes: containerRef.current.querySelectorAll('.mermaid'),
-        }).catch(err => console.error("Mermaid run error in Markdown:", err));
+      // Find all mermaid divs that haven't been processed yet
+      // Note: mermaid.run handles finding elements automatically if passed selector
+      mermaid
+        .run({
+          nodes: containerRef.current.querySelectorAll('.mermaid'),
+        })
+        .catch((err) => console.error('Mermaid run error in Markdown:', err));
     }
   }, [htmlContent, theme]);
 
   return (
-    <div className="flex flex-col h-full w-full relative bg-gray-50 dark:bg-gray-950 overflow-hidden transition-colors duration-200">
-       
-       {/* Inject Custom CSS */}
-       {previewConfig?.customCss && (
-         <style>{previewConfig.customCss}</style>
-       )}
+    <div className="relative flex h-full w-full flex-col overflow-hidden bg-gray-50 transition-colors duration-200 dark:bg-gray-950">
+      {/* Inject Custom CSS */}
+      {previewConfig?.customCss && <style>{previewConfig.customCss}</style>}
 
-       <div 
+      <div
         ref={containerRef}
-        className="flex-1 overflow-auto p-8 prose dark:prose-invert max-w-none preview-container"
+        className="prose dark:prose-invert preview-container max-w-none flex-1 overflow-auto p-8"
         style={{
-            fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+          fontFamily: 'ui-sans-serif, system-ui, sans-serif',
         }}
       >
         {/* Default Theme Overrides (can be overridden by customCss) */}
@@ -85,7 +84,7 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ code, theme, previewC
             .prose pre { background-color: ${theme === 'dark' ? '#1f2937' : '#f1f5f9'}; border-radius: 0.5rem; }
             .mermaid { display: flex; justify-content: center; margin: 2rem 0; background: transparent; }
         `}</style>
-        
+
         <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
       </div>
     </div>
