@@ -2,25 +2,161 @@
 @tailwind components;
 @tailwind utilities;
 
+/**
+ * 全域樣式設定
+ * ============================================
+ * 主題色系變數統一定義於 lib/theme.config.ts
+ * 此處使用 CSS 變數以支援動態主題切換
+ */
+
 @layer base {
   :root {
+    /* 主色系 - 來自 theme.config.ts */
     --color-primary-50: 240 249 255;
     --color-primary-100: 224 242 254;
     --color-primary-200: 186 230 253;
     --color-primary-300: 125 211 252;
     --color-primary-400: 56 189 248;
-    --color-primary-500: 14 165 233;
+    --color-primary-500: 14 165 233;  /* 主要品牌色 */
     --color-primary-600: 2 132 199;
     --color-primary-700: 3 105 161;
     --color-primary-800: 7 89 133;
     --color-primary-900: 12 74 110;
     --color-primary-950: 8 47 73;
+
+    /* 語意化顏色 */
+    --color-success: 16 185 129;
+    --color-error: 239 68 68;
+    --color-warning: 245 158 11;
+    --color-info: 59 130 246;
+  }
+
+  /* 基礎樣式重置 */
+  * {
+    @apply border-gray-200 dark:border-gray-700;
+  }
+
+  html {
+    @apply h-full;
+  }
+
+  body {
+    @apply h-full antialiased;
+    @apply bg-white text-gray-900;
+    @apply dark:bg-gray-900 dark:text-gray-100;
   }
 }
 
-/* Custom utility classes */
+/**
+ * 自訂工具類
+ * ============================================
+ */
 @layer utilities {
+  /* 文字平衡 */
   .text-balance {
     text-wrap: balance;
   }
+
+  /* 平滑滾動 */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+
+  /* 焦點環樣式 */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  }
+
+  /* 無障礙性：僅供螢幕閱讀器 */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* 隱藏滾動條但保持滾動功能 */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
+
+/**
+ * 元件樣式
+ * ============================================
+ */
+@layer components {
+  /* 按鈕基礎樣式 */
+  .btn {
+    @apply inline-flex items-center justify-center;
+    @apply px-4 py-2 rounded-md;
+    @apply font-medium text-sm;
+    @apply transition-colors duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+
+  .btn-primary {
+    @apply bg-primary-600 text-white;
+    @apply hover:bg-primary-700;
+    @apply focus:ring-primary-500;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-900;
+    @apply hover:bg-gray-300;
+    @apply dark:bg-gray-700 dark:text-gray-100;
+    @apply dark:hover:bg-gray-600;
+  }
+
+  /* 輸入框基礎樣式 */
+  .input {
+    @apply w-full px-3 py-2 rounded-md;
+    @apply border border-gray-300 dark:border-gray-600;
+    @apply bg-white dark:bg-gray-900;
+    @apply text-gray-900 dark:text-gray-100;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500;
+  }
+}
+
+/**
+ * 動畫
+ * ============================================
+ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+

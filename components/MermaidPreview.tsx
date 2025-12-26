@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback, memo } from 'react';
 import mermaid from 'mermaid';
 import { ZoomIn, ZoomOut, RotateCcw, Download } from 'lucide-react';
 import { Theme } from '@/types/types';
@@ -8,7 +8,7 @@ interface MermaidPreviewProps {
   theme: Theme;
 }
 
-const MermaidPreview: React.FC<MermaidPreviewProps> = ({ code, theme }) => {
+const MermaidPreview: React.FC<MermaidPreviewProps> = memo(({ code, theme }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [svgContent, setSvgContent] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
@@ -72,10 +72,10 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = ({ code, theme }) => {
             }
           }
         }, 100);
-      } catch (err: any) {
+      } catch (err) {
         console.error('Mermaid Render Error:', err);
         console.error('Failed code:', code);
-        const errorMessage = err?.message || 'Syntax Error: Invalid Mermaid Code';
+        const errorMessage = err instanceof Error ? err.message : 'Syntax Error: Invalid Mermaid Code';
         setError(errorMessage);
       }
     };
@@ -88,31 +88,41 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = ({ code, theme }) => {
   }, [code, theme]); // Re-render on code or theme change
 
   // Zoom handlers
-  const handleZoomIn = () => setScale((prev) => Math.min(prev + 0.2, 3));
-  const handleZoomOut = () => setScale((prev) => Math.max(prev - 0.2, 0.2));
-  const handleResetZoom = () => {
+  const handleZoomIn = useCallback(() => setScale((prev) => Math.min(prev + 0.2, 3)), []);
+  const handleZoomOut = useCallback(() => setScale((prev) => Math.max(prev - 0.2, 0.2)), []);
+  const handleResetZoom = useCallback(() => {
     setScale(1);
     setPosition({ x: 0, y: 0 });
-  };
+  }, []);
 
   // Pan handlers
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button !== 0) return; // Only left click
     setIsDragging(true);
     setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
-  };
+  }, [position]);
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isDragging) return;
     setPosition({
       x: e.clientX - dragStart.x,
       y: e.clientY - dragStart.y,
     });
-  };
+  }, [isDragging, dragStart]);
 
-  const handleMouseUp = () => setIsDragging(false);
+  const handleMouseUp = useCallback(() => setIsDragging(false), []);
 
-  const handleExportSvg = () => {
+  // 滾輪縮放
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    // 按住 Ctrl (Windows/Linux) 或 Cmd (Mac) 時啟用滾輪縮放
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -0.1 : 0.1;
+      setScale((prev) => Math.min(Math.max(prev + delta, 0.2), 3));
+    }
+  }, []);
+
+  const handleExportSvg = useCallback(() => {
     if (!svgContent) return;
     const blob = new Blob([svgContent], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(blob);
@@ -123,7 +133,7 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = ({ code, theme }) => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  };
+  }, [svgContent]);
 
   return (
     <div className="relative flex h-full w-full flex-col overflow-hidden bg-gray-50 transition-colors duration-200 dark:bg-gray-900">
@@ -155,6 +165,7 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = ({ code, theme }) => {
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
+        onWheel={handleWheel}
       >
         <div
           style={{
@@ -178,35 +189,48 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = ({ code, theme }) => {
       </div>
 
       {/* Bottom Right Zoom Controls */}
-      <div className="absolute bottom-6 right-6 z-10 flex items-center space-x-1 rounded-lg border border-gray-200 bg-white p-1 shadow-md dark:border-gray-700 dark:bg-gray-800">
-        <button
-          onClick={handleResetZoom}
-          className="rounded p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
-          title="Reset View"
-        >
-          <RotateCcw size={16} />
-        </button>
-        <div className="mx-1 h-4 w-px bg-gray-200 dark:bg-gray-700" />
-        <button
-          onClick={handleZoomOut}
-          className="rounded p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
-          title="Zoom Out"
-        >
-          <ZoomOut size={16} />
-        </button>
-        <span className="w-12 text-center font-mono text-xs text-gray-500 dark:text-gray-400">
-          {Math.round(scale * 100)}%
-        </span>
-        <button
-          onClick={handleZoomIn}
-          className="rounded p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
-          title="Zoom In"
-        >
-          <ZoomIn size={16} />
-        </button>
+      <div className="absolute bottom-6 right-6 z-10 flex flex-col items-end space-y-2">
+        {/* 提示文字 */}
+        <div className="rounded-md bg-black/70 px-2 py-1 text-xs text-white backdrop-blur-sm">
+          <kbd className="rounded bg-white/20 px-1.5 py-0.5 font-mono text-[10px]">Ctrl</kbd> + 滾輪縮放
+        </div>
+
+        {/* 縮放控制 */}
+        <div className="flex items-center space-x-1 rounded-lg border border-gray-200 bg-white p-1 shadow-md dark:border-gray-700 dark:bg-gray-800">
+          <button
+            onClick={handleResetZoom}
+            className="rounded p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+            title="重置檢視"
+            aria-label="重置縮放"
+          >
+            <RotateCcw size={16} />
+          </button>
+          <div className="mx-1 h-4 w-px bg-gray-200 dark:bg-gray-700" />
+          <button
+            onClick={handleZoomOut}
+            className="rounded p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+            title="縮小"
+            aria-label="縮小"
+          >
+            <ZoomOut size={16} />
+          </button>
+          <span className="w-12 text-center font-mono text-xs text-gray-500 dark:text-gray-400">
+            {Math.round(scale * 100)}%
+          </span>
+          <button
+            onClick={handleZoomIn}
+            className="rounded p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+            title="放大"
+            aria-label="放大"
+          >
+            <ZoomIn size={16} />
+          </button>
+        </div>
       </div>
     </div>
   );
-};
+});
+
+MermaidPreview.displayName = 'MermaidPreview';
 
 export default MermaidPreview;
