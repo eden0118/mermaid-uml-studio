@@ -16,18 +16,6 @@
     --color-primary-900: 12 74 110;
     --color-primary-950: 8 47 73;
   }
-
-  html {
-    height: 100%;
-  }
-
-  body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100vh;
-    overflow: hidden;
-  }
 }
 
 /* Custom utility classes */
