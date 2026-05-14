@@ -1,0 +1,41 @@
+
+> mermaid-uml-studio@0.1.0 lint
+> eslint .
+
+
+/Users/eden/Coding/mermaid-uml-studio/components/EditorPage.tsx
+  47:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/eden/Coding/mermaid-uml-studio/components/EditorPage.tsx:47:5
+  45 |   useEffect(() => {
+  46 |     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+> 47 |     setTheme(prefersDark ? 'dark' : 'light');
+     |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  48 |   }, []);
+  49 |
+  50 |   // 套用主題到 DOM  react-hooks/set-state-in-effect
+
+/Users/eden/Coding/mermaid-uml-studio/components/MarkdownPreview.tsx
+  30:13  warning  'originalCodeRenderer' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/eden/Coding/mermaid-uml-studio/components/SettingsModal.tsx
+  17:87  warning  'theme' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/eden/Coding/mermaid-uml-studio/eslint.config.mjs
+  8:7  warning  '__dirname' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/eden/Coding/mermaid-uml-studio/hooks/useGoogleDrive.ts
+    7:11  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+    8:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   14:50  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   48:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  141:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 9 problems (1 error, 8 warnings)
+

@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { SCOPES, DISCOVERY_DOCS, MARKDOWN_MIME } from '@/lib/constants';
 import { FileData } from '@/types/types';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 declare global {
   interface Window {
     gapi: any;

@@ -27,15 +27,14 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, pre
     const parseMarkdown = async () => {
       // Custom renderer to intercept mermaid code blocks
       const renderer = new marked.Renderer();
-      const originalCodeRenderer = renderer.code.bind(renderer);
 
-      renderer.code = (codeBlock, language, isEscaped) => {
-        if (language === 'mermaid') {
+      renderer.code = ({ text, lang }) => {
+        if (lang === 'mermaid') {
           // Return a container with a class we can target later
-          return `<div class="mermaid">${codeBlock}</div>`;
+          return `<div class="mermaid">${text}</div>`;
         }
         // Fallback to default behavior for other code blocks
-        return originalCodeRenderer(codeBlock, language, isEscaped);
+        return `<pre><code class="language-${lang}">${text}</code></pre>`;
       };
 
       try {

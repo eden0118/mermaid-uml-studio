@@ -59,42 +59,44 @@ const Toolbar: React.FC<ToolbarProps> = ({
   const [showTemplates, setShowTemplates] = useState(false);
 
   return (
-    <div className="flex h-14 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 transition-colors duration-200 dark:border-gray-700 dark:bg-gray-900" role="toolbar" aria-label="編輯器工具列">
-      <div className="flex items-center space-x-4">
+    <div className="glass relative z-20 flex h-16 shrink-0 items-center justify-between px-6 shadow-sm transition-all duration-300 dark:border-b dark:border-gray-800" role="toolbar" aria-label="編輯器工具列">
+      <div className="flex items-center space-x-6">
         {/* Home Button */}
         <button
           onClick={onGoHome}
-          className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-primary-400"
+          className="group flex h-10 w-10 items-center justify-center rounded-xl bg-gray-50 text-gray-500 transition-all hover:bg-primary-50 hover:text-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-800/50 dark:text-gray-400 dark:hover:bg-primary-900/30 dark:hover:text-primary-400"
           title="返回首頁"
           aria-label="返回首頁"
         >
-          <Home size={18} aria-hidden="true" />
+          <Home size={20} className="transition-transform group-hover:scale-110" aria-hidden="true" />
         </button>
 
-        <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" aria-hidden="true" />
+        <div className="h-6 w-px bg-gray-200 dark:bg-gray-800" aria-hidden="true" />
 
-        <div className="flex items-center space-x-2 text-gray-700 dark:text-gray-200">
-          <FileCode size={20} className="text-primary-600 dark:text-primary-400" aria-hidden="true" />
-          <span className="text-sm font-semibold capitalize">{viewMode}</span>
+        <div className="flex items-center space-x-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
+            <FileCode size={18} aria-hidden="true" />
+          </div>
+          <span className="text-sm font-bold tracking-tight capitalize text-gray-900 dark:text-white">{viewMode}</span>
         </div>
 
-        <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" aria-hidden="true" />
+        <div className="h-6 w-px bg-gray-200 dark:bg-gray-800" aria-hidden="true" />
 
         {/* Templates Dropdown (Only for Mermaid) */}
         {viewMode === 'mermaid' && (
           <div className="relative">
             <button
               onClick={() => setShowTemplates(!showTemplates)}
-              className="flex items-center space-x-1 rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              className="btn btn-secondary !px-3 !py-1.5 space-x-2"
               aria-label="選擇模板"
               aria-expanded={showTemplates}
               aria-haspopup="true"
             >
-              <LayoutTemplate size={14} aria-hidden="true" />
-              <span>模板</span>
+              <LayoutTemplate size={16} aria-hidden="true" />
+              <span className="text-xs">模板庫</span>
               <ChevronDown
-                size={12}
-                className={`transform transition-transform ${showTemplates ? 'rotate-180' : ''}`}
+                size={14}
+                className={`transform transition-transform duration-300 ${showTemplates ? 'rotate-180' : ''}`}
                 aria-hidden="true"
               />
             </button>
@@ -102,7 +104,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             {showTemplates && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowTemplates(false)} aria-hidden="true"></div>
-                <div className="animate-in fade-in zoom-in-95 absolute left-0 top-full z-20 mt-2 w-48 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-xl duration-100 dark:border-gray-700 dark:bg-gray-800" role="menu" aria-label="模板選單">
+                <div className="animate-slide-up glass absolute left-0 top-full z-20 mt-2 w-56 overflow-hidden rounded-2xl border border-gray-100 p-2 shadow-2xl dark:border-gray-800" role="menu" aria-label="模板選單">
                   {UML_TEMPLATES.map((t) => (
                     <button
                       key={t.name}
@@ -110,7 +112,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                         onSelectTemplate(t.code);
                         setShowTemplates(false);
                       }}
-                      className="w-full px-4 py-2 text-left text-xs text-gray-700 transition-colors hover:bg-primary-50 hover:text-primary-600 focus:bg-primary-50 focus:text-primary-600 focus:outline-none dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-primary-400"
+                      className="w-full rounded-xl px-4 py-2.5 text-left text-xs font-medium text-gray-700 transition-all hover:bg-primary-50 hover:text-primary-600 focus:bg-primary-50 focus:text-primary-600 focus:outline-none dark:text-gray-300 dark:hover:bg-primary-900/30 dark:hover:text-primary-400"
                       role="menuitem"
                     >
                       {t.name}
@@ -122,106 +124,117 @@ const Toolbar: React.FC<ToolbarProps> = ({
           </div>
         )}
 
-        {viewMode === 'mermaid' && <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" aria-hidden="true" />}
+        {viewMode === 'mermaid' && <div className="h-6 w-px bg-gray-200 dark:bg-gray-800" aria-hidden="true" />}
 
         {/* Auto Update Toggle */}
         <button
           onClick={toggleAutoUpdate}
-          className="group flex cursor-pointer items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded"
+          className="group flex cursor-pointer items-center space-x-3 rounded-xl p-1.5 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:hover:bg-gray-800/50"
           role="switch"
           aria-checked={autoUpdate}
           aria-label="自動更新預覽"
         >
           <div
-            className={`relative h-5 w-9 rounded-full transition-colors duration-200 ${autoUpdate ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'}`}
+            className={`relative h-5 w-9 rounded-full transition-all duration-300 ${autoUpdate ? 'bg-primary-500 shadow-sm shadow-primary-500/50' : 'bg-gray-300 dark:bg-gray-700'}`}
             aria-hidden="true"
           >
             <div
-              className={`absolute left-0.5 top-0.5 h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${autoUpdate ? 'translate-x-4' : 'translate-x-0'}`}
+              className={`absolute left-0.5 top-0.5 h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-300 ${autoUpdate ? 'translate-x-4' : 'translate-x-0'}`}
             />
           </div>
-          <span className="text-xs font-medium text-gray-600 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-200">
-            自動更新
+          <span className="text-xs font-bold text-gray-600 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-200">
+            即時更新
           </span>
         </button>
 
-        <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" aria-hidden="true" />
+        <div className="h-6 w-px bg-gray-200 dark:bg-gray-800" aria-hidden="true" />
 
         {/* Filename Input */}
-        <label htmlFor="filename-input" className="sr-only">檔案名稱</label>
-        <input
-          id="filename-input"
-          type="text"
-          value={fileName}
-          onChange={(e) => setFileName(e.target.value)}
-          className="w-48 border-gray-300 bg-transparent py-1 text-xs text-gray-600 outline-none transition-colors hover:border-b focus:border-primary-500 dark:border-gray-600 dark:text-gray-300"
-          aria-label="檔案名稱"
-        />
+        <div className="group relative flex items-center">
+          <input
+            id="filename-input"
+            type="text"
+            value={fileName}
+            onChange={(e) => setFileName(e.target.value)}
+            className="w-48 bg-transparent py-1.5 text-xs font-bold text-gray-700 transition-all outline-none focus:text-primary-600 dark:text-gray-300 dark:focus:text-primary-400"
+            aria-label="檔案名稱"
+            placeholder="未命名檔案"
+          />
+          <div className="absolute -bottom-1 left-0 h-0.5 w-0 bg-primary-500 transition-all group-focus-within:w-full opacity-50" />
+        </div>
       </div>
 
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-3">
         {status === AppStatus.SAVING && (
-          <span className="mr-2 animate-pulse text-xs text-gray-500" role="status" aria-live="polite">儲存中...</span>
+          <div className="flex items-center space-x-2 rounded-full bg-gray-100 px-3 py-1 dark:bg-gray-800">
+            <div className="h-2 w-2 animate-bounce rounded-full bg-primary-500" />
+            <span className="text-[10px] font-bold text-gray-500" role="status" aria-live="polite">儲存中</span>
+          </div>
         )}
-        {status === AppStatus.SUCCESS && <CheckCircle2 size={16} className="mr-2 text-green-500" aria-label="儲存成功" />}
+        {status === AppStatus.SUCCESS && (
+          <div className="flex items-center space-x-1 rounded-full bg-green-50 px-3 py-1 text-green-600 dark:bg-green-900/20 dark:text-green-400">
+            <CheckCircle2 size={14} aria-label="儲存成功" />
+            <span className="text-[10px] font-bold">已同步</span>
+          </div>
+        )}
 
         {/* Settings */}
         <button
           onClick={onOpenSettings}
-          className="rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-gray-400 dark:hover:bg-gray-800"
+          className="rounded-xl p-2.5 text-gray-500 transition-all hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
           title="設定"
           aria-label="開啟設定"
         >
-          <Settings size={18} aria-hidden="true" />
+          <Settings size={20} aria-hidden="true" />
         </button>
 
         {/* File Actions Group */}
-        <div className="flex items-center space-x-1 rounded-lg border border-gray-200 bg-gray-100 p-1 dark:border-gray-700 dark:bg-gray-800" role="group" aria-label="檔案操作">
+        <div className="flex items-center space-x-1.5 rounded-2xl bg-gray-100 p-1 dark:bg-gray-800/50" role="group" aria-label="檔案操作">
           <label
-            className="cursor-pointer rounded-md p-1.5 text-gray-600 transition-all hover:bg-white hover:text-primary-600 focus-within:ring-2 focus-within:ring-primary-500 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-primary-400"
+            className="cursor-pointer rounded-xl p-2 text-gray-600 transition-all hover:bg-white hover:text-primary-600 hover:shadow-sm focus-within:ring-2 focus-within:ring-primary-500 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-primary-400"
             title="開啟 .md 檔案"
           >
-            <Upload size={16} aria-hidden="true" />
+            <Upload size={18} aria-hidden="true" />
             <input type="file" accept=".md,.txt" onChange={onLoadLocal} className="hidden" aria-label="上傳檔案" />
           </label>
           <button
             onClick={onSaveLocal}
-            className="rounded-md p-1.5 text-gray-600 transition-all hover:bg-white hover:text-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-primary-400"
+            className="rounded-xl p-2 text-gray-600 transition-all hover:bg-white hover:text-primary-600 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-primary-400"
             title="儲存為 .md"
             aria-label="下載檔案"
           >
-            <Download size={16} aria-hidden="true" />
+            <Download size={18} aria-hidden="true" />
           </button>
         </div>
 
         {/* Drive Actions Group */}
-        <div className="flex items-center space-x-1 rounded-lg border border-gray-200 bg-gray-100 p-1 dark:border-gray-700 dark:bg-gray-800" role="group" aria-label="Google Drive 操作">
+        <div className={`flex items-center space-x-1.5 rounded-2xl p-1 transition-colors ${isDriveConnected ? 'bg-green-50 dark:bg-green-900/10' : 'bg-gray-100 dark:bg-gray-800/50'}`} role="group" aria-label="Google Drive 操作">
           {!isDriveConnected ? (
             <button
               onClick={onGoogleLogin}
-              className="flex items-center space-x-1 px-2 py-1 text-xs text-gray-600 transition-colors hover:text-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-gray-400 dark:hover:text-primary-400"
+              className="flex items-center space-x-2 rounded-xl px-4 py-2 text-xs font-bold text-gray-600 transition-all hover:bg-white hover:text-primary-600 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-primary-400"
               aria-label="連接 Google Drive"
             >
-              <LogIn size={14} aria-hidden="true" />
-              <span className="hidden sm:inline">Drive</span>
+              <LogIn size={16} aria-hidden="true" />
+              <span className="hidden sm:inline font-black">連接 DRIVE</span>
             </button>
           ) : (
             <>
               <button
                 onClick={onLoadFromDrive}
-                className="rounded-md p-1.5 text-green-600 transition-all hover:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-green-400 dark:hover:bg-gray-700"
+                className="rounded-xl p-2 text-green-600 transition-all hover:bg-white hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-green-400 dark:hover:bg-gray-700"
                 title="從 Google Drive 開啟"
                 aria-label="從 Google Drive 開啟"
               >
-                <FileText size={16} aria-hidden="true" />
+                <FileText size={18} aria-hidden="true" />
               </button>
               <button
                 onClick={onSaveToDrive}
-                className="rounded-md p-1.5 text-green-600 transition-all hover:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-green-400 dark:hover:bg-gray-700"
+                className="rounded-xl p-2 text-green-600 transition-all hover:bg-white hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-green-400 dark:hover:bg-gray-700"
                 title="儲存到 Google Drive"
                 aria-label="儲存到 Google Drive"
               >
-                <Save size={16} aria-hidden="true" />
+                <Save size={18} aria-hidden="true" />
               </button>
             </>
           )}
@@ -230,11 +243,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
-          className="rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-gray-400 dark:hover:bg-gray-800"
+          className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-50 text-gray-500 transition-all hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
           title={`切換至${theme === 'light' ? '深色' : '淺色'}模式`}
           aria-label={`切換至${theme === 'light' ? '深色' : '淺色'}模式`}
         >
-          {theme === 'light' ? <Moon size={18} aria-hidden="true" /> : <Sun size={18} aria-hidden="true" />}
+          {theme === 'light' ? <Moon size={20} aria-hidden="true" /> : <Sun size={20} aria-hidden="true" />}
         </button>
       </div>
     </div>

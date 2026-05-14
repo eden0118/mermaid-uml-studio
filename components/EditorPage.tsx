@@ -44,6 +44,7 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
   // 初始化主題
   useEffect(() => {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTheme(prefersDark ? 'dark' : 'light');
   }, []);
 
@@ -134,10 +135,13 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
   };
 
   return (
-    <div className="flex h-screen flex-col bg-white transition-colors duration-200 dark:bg-gray-900">
-      <div className="flex flex-1 overflow-hidden">
+    <div className="flex h-screen flex-col bg-white transition-colors duration-300 dark:bg-gray-950">
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Background Decorative Element */}
+        <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-primary-500/5 blur-3xl pointer-events-none" />
+        
         {/* 左側：編輯器 */}
-        <div className="relative z-10 flex w-1/2 flex-col border-r border-gray-200 bg-white shadow-xl transition-colors duration-200 dark:border-gray-700 dark:bg-gray-900">
+        <div className="relative z-10 flex w-1/2 flex-col border-r border-gray-100 bg-white/50 backdrop-blur-sm shadow-2xl transition-all duration-300 dark:border-gray-800 dark:bg-gray-900/50">
           <Toolbar
             fileName={fileName}
             setFileName={setFileName}
@@ -158,18 +162,24 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
             onOpenSettings={() => setIsSettingsOpen(true)}
           />
 
-          <CodeEditor
-            value={code}
-            onChange={setCode}
-            placeholder={`輸入 ${viewMode === 'mermaid' ? 'Mermaid 語法' : 'Markdown 內容'}...`}
-            config={editorConfig}
-            ariaLabel={`${viewMode === 'mermaid' ? 'Mermaid' : 'Markdown'} 編輯器`}
-          />
+          <div className="flex-1 overflow-hidden p-4">
+            <div className="h-full rounded-2xl overflow-hidden border border-gray-100 shadow-inner dark:border-gray-800">
+              <CodeEditor
+                value={code}
+                onChange={setCode}
+                placeholder={`輸入 ${viewMode === 'mermaid' ? 'Mermaid 語法' : 'Markdown 內容'}...`}
+                config={editorConfig}
+                ariaLabel={`${viewMode === 'mermaid' ? 'Mermaid' : 'Markdown'} 編輯器`}
+              />
+            </div>
+          </div>
         </div>
 
         {/* 右側：預覽 */}
-        <div className="h-full w-1/2 bg-gray-50 transition-colors duration-200 dark:bg-gray-900">
-          {renderPreview()}
+        <div className="relative h-full w-1/2 bg-gray-50/50 transition-all duration-300 dark:bg-gray-950/50">
+          <div className="h-full w-full overflow-hidden">
+            {renderPreview()}
+          </div>
         </div>
       </div>
 
@@ -181,7 +191,6 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
         setEditorConfig={setEditorConfig}
         previewConfig={previewConfig}
         setPreviewConfig={setPreviewConfig}
-        theme={theme}
       />
     </div>
   );

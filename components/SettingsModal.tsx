@@ -1,5 +1,5 @@
 import React, { useState, memo } from 'react';
-import { EditorConfig, PreviewConfig, Theme } from '@/types/types';
+import { EditorConfig, PreviewConfig } from '@/types/types';
 import { X, Type, Palette } from 'lucide-react';
 import { THEME_CONFIG } from '@/lib/theme.config';
 
@@ -10,11 +10,10 @@ interface SettingsModalProps {
   setEditorConfig: (config: EditorConfig) => void;
   previewConfig: PreviewConfig;
   setPreviewConfig: (config: PreviewConfig) => void;
-  theme: Theme;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = memo(
-  ({ isOpen, onClose, editorConfig, setEditorConfig, previewConfig, setPreviewConfig, theme }) => {
+  ({ isOpen, onClose, editorConfig, setEditorConfig, previewConfig, setPreviewConfig }) => {
     const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor');
 
   if (!isOpen) return null;
