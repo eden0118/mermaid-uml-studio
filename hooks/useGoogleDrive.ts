@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { SCOPES, DISCOVERY_DOCS, MARKDOWN_MIME } from '@/lib/constants';
 import { FileData } from '@/types/types';
+import { handleError, ErrorType } from '@/lib/utils';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -24,41 +25,57 @@ export const useGoogleDrive = () => {
 
   useEffect(() => {
     const loadGapi = async () => {
-      if (!CLIENT_ID || !API_KEY) {
-        console.warn('Google Client ID or API Key missing. Drive integration disabled.');
+      const isPlaceholder = (val: string) => !val || val.includes('your_google_');
+      
+      if (isPlaceholder(CLIENT_ID) || isPlaceholder(API_KEY)) {
+        console.warn('Google Client ID 或 API Key 尚未設定。Google Drive 功能已停用。');
         return;
       }
 
       try {
-        await new Promise<void>((resolve) => {
+        await new Promise<void>((resolve, reject) => {
           if (window.gapi) {
-            window.gapi.load('client', resolve);
+            window.gapi.load('client', {
+              callback: resolve,
+              onerror: () => reject(new Error('GAPI client load failed')),
+              timeout: 10000,
+              ontimeout: () => reject(new Error('GAPI client load timeout'))
+            });
           } else {
-            // simple retry or fail silently
             resolve();
           }
         });
+
+        if (!window.gapi?.client) {
+          throw new Error('GAPI client not available');
+        }
 
         await window.gapi.client.init({
           apiKey: API_KEY,
           discoveryDocs: DISCOVERY_DOCS,
         });
 
-        const client = window.google.accounts.oauth2.initTokenClient({
-          client_id: CLIENT_ID,
-          scope: SCOPES,
-          callback: (tokenResponse: any) => {
-            if (tokenResponse && tokenResponse.access_token) {
-              setAccessToken(tokenResponse.access_token);
-              setIsDriveConnected(true);
-            }
-          },
-        });
-
-        setTokenClient(client);
-        setIsInitialized(true);
+        if (window.google?.accounts?.oauth2) {
+          const client = window.google.accounts.oauth2.initTokenClient({
+            client_id: CLIENT_ID,
+            scope: SCOPES,
+            callback: (tokenResponse: any) => {
+              if (tokenResponse && tokenResponse.access_token) {
+                setAccessToken(tokenResponse.access_token);
+                setIsDriveConnected(true);
+              }
+            },
+          });
+          setTokenClient(client);
+          setIsInitialized(true);
+        } else {
+          throw new Error('Google Identity Services (GSI) not loaded');
+        }
       } catch (err) {
-        console.error('Error initializing Google Drive API', err);
+        handleError(ErrorType.DRIVE_AUTH, err, { 
+          context: 'GoogleDriveInit', 
+          showAlert: false // 初始化失敗通常不打擾使用者
+        });
       }
     };
 
@@ -122,10 +139,9 @@ export const useGoogleDrive = () => {
         },
         body: multipartRequestBody,
       });
-      alert('File saved to Google Drive!');
     } catch (e) {
-      console.error('Upload error', e);
-      throw new Error('Failed to upload to Drive');
+      handleError(ErrorType.DRIVE_UPLOAD, e, { context: 'SaveToDrive' });
+      throw e;
     }
   };
 
@@ -156,6 +172,7 @@ export const useGoogleDrive = () => {
                 content: response.body,
               });
             } catch (e) {
+              handleError(ErrorType.DRIVE_DOWNLOAD, e, { context: 'PickFileFromDrive' });
               reject(e);
             }
           } else if (data.action === window.google.picker.Action.CANCEL) {

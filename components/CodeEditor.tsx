@@ -5,7 +5,9 @@
  * 用於 Mermaid 和 Markdown 編輯
  */
 
-import React, { useRef, useEffect, useState, memo } from 'react';
+'use client';
+
+import React, { useRef, useEffect, useState, useCallback, memo } from 'react';
 import type { EditorConfig } from '@/types/types';
 
 interface CodeEditorProps {
@@ -19,6 +21,7 @@ interface CodeEditorProps {
 const CodeEditor: React.FC<CodeEditorProps> = memo(
   ({ value, onChange, placeholder, config, ariaLabel }) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const lineNumbersRef = useRef<HTMLDivElement>(null);
     const [lineCount, setLineCount] = useState(1);
 
     // 計算行數
@@ -27,17 +30,14 @@ const CodeEditor: React.FC<CodeEditorProps> = memo(
     }, [value]);
 
     // 同步滾動
-    const handleScroll = () => {
-      if (textareaRef.current) {
-        const lineNumbers = document.getElementById('line-numbers');
-        if (lineNumbers) {
-          lineNumbers.scrollTop = textareaRef.current.scrollTop;
-        }
+    const handleScroll = useCallback(() => {
+      if (textareaRef.current && lineNumbersRef.current) {
+        lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
       }
-    };
+    }, []);
 
     // 鍵盤快捷鍵：Tab 插入空格
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === 'Tab') {
         e.preventDefault();
         const { selectionStart, selectionEnd } = e.currentTarget;
@@ -45,21 +45,21 @@ const CodeEditor: React.FC<CodeEditorProps> = memo(
           value.substring(0, selectionStart) + '  ' + value.substring(selectionEnd);
         onChange(newValue);
         // 設定游標位置
-        setTimeout(() => {
+        requestAnimationFrame(() => {
           if (textareaRef.current) {
             textareaRef.current.selectionStart = textareaRef.current.selectionEnd =
               selectionStart + 2;
           }
-        }, 0);
+        });
       }
-    };
+    }, [value, onChange]);
 
     return (
-      <div className="relative flex flex-1 overflow-hidden">
+      <div className="relative flex h-full w-full overflow-hidden bg-white dark:bg-gray-900">
         {/* 行號顯示 */}
         <div
-          id="line-numbers"
-          className="w-10 select-none overflow-y-auto overflow-x-hidden border-r border-gray-200 bg-gray-50 pb-4 pr-2 pt-4 text-right font-mono text-xs text-gray-400 transition-colors duration-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500 scrollbar-hide"
+          ref={lineNumbersRef}
+          className="w-12 shrink-0 select-none overflow-hidden border-r border-gray-100 bg-gray-50/80 py-4 pr-3 text-right font-mono text-gray-300 transition-colors duration-200 dark:border-gray-800 dark:bg-gray-900/80 dark:text-gray-600 scrollbar-hide"
           style={{
             lineHeight: config.lineHeight,
             fontSize: `${config.fontSize}px`,
@@ -67,14 +67,14 @@ const CodeEditor: React.FC<CodeEditorProps> = memo(
           aria-hidden="true"
         >
           {Array.from({ length: lineCount }, (_, i) => (
-            <div key={i + 1}>{i + 1}</div>
+            <div key={i + 1} className="px-1">{i + 1}</div>
           ))}
         </div>
 
         {/* 文字編輯區 */}
         <textarea
           ref={textareaRef}
-          className="h-full flex-1 resize-none bg-white p-4 text-gray-800 outline-none transition-colors duration-200 dark:bg-gray-900 dark:text-gray-100 overflow-y-auto"
+          className="h-full flex-1 resize-none bg-transparent p-4 text-gray-800 outline-none transition-colors duration-200 dark:text-gray-100 overflow-y-auto scrollbar-hide"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onScroll={handleScroll}
@@ -85,6 +85,7 @@ const CodeEditor: React.FC<CodeEditorProps> = memo(
             fontFamily: config.fontFamily,
             fontSize: `${config.fontSize}px`,
             lineHeight: config.lineHeight,
+            tabSize: 2,
           }}
           aria-label={ariaLabel || '程式碼編輯器'}
           aria-multiline="true"

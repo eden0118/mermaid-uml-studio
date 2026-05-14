@@ -14,7 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script src="https://accounts.google.com/gsi/client" async defer />
         <script src="https://apis.google.com/js/api.js" async defer />
       </head>
-      <body className="h-full antialiased">{children}</body>
+      <body className="h-full overflow-hidden antialiased">{children}</body>
     </html>
   );
 }

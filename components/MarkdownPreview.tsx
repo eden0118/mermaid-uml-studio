@@ -1,6 +1,14 @@
-import React, { useEffect, useRef, useState, memo } from 'react';
+/**
+ * MarkdownPreview 元件
+ * ============================================
+ * 使用 marked.js 渲染 Markdown 的預覽元件
+ * 支援嵌入式 Mermaid 圖表
+ */
+
+'use client';
+
+import React, { useEffect, useRef, useState, useCallback, memo } from 'react';
 import { marked } from 'marked';
-import mermaid from 'mermaid';
 import { Theme, PreviewConfig } from '@/types/types';
 
 interface MarkdownPreviewProps {
@@ -9,32 +17,55 @@ interface MarkdownPreviewProps {
   previewConfig?: PreviewConfig;
 }
 
+let mermaidRenderCounter = 0;
+
 const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, previewConfig }) => {
   const [htmlContent, setHtmlContent] = useState<string>('');
   const containerRef = useRef<HTMLDivElement>(null);
+  const mermaidRef = useRef<typeof import('mermaid').default | null>(null);
+  const [mermaidLoaded, setMermaidLoaded] = useState(false);
 
-  // Initialize Mermaid config once or when theme changes
+  // Dynamic import mermaid (avoid SSR crash)
   useEffect(() => {
-    mermaid.initialize({
+    let cancelled = false;
+    import('mermaid').then((mod) => {
+      if (!cancelled) {
+        mermaidRef.current = mod.default;
+        setMermaidLoaded(true);
+      }
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Initialize Mermaid config when theme changes
+  useEffect(() => {
+    if (!mermaidRef.current) return;
+    mermaidRef.current.initialize({
       startOnLoad: false,
       theme: theme === 'dark' ? 'dark' : 'default',
       securityLevel: 'loose',
     });
-  }, [theme]);
+  }, [theme, mermaidLoaded]);
 
   // Handle Markdown Parsing + Mermaid Block Detection
   useEffect(() => {
     const parseMarkdown = async () => {
-      // Custom renderer to intercept mermaid code blocks
+      if (!code) {
+        setHtmlContent('');
+        return;
+      }
+
       const renderer = new marked.Renderer();
 
       renderer.code = ({ text, lang }) => {
         if (lang === 'mermaid') {
-          // Return a container with a class we can target later
-          return `<div class="mermaid">${text}</div>`;
+          const id = `md-mermaid-${++mermaidRenderCounter}`;
+          // Encode text to preserve it for mermaid rendering
+          const encoded = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          return `<div class="mermaid-block" data-mermaid-id="${id}" data-mermaid-code="${encodeURIComponent(text)}">${encoded}</div>`;
         }
-        // Fallback to default behavior for other code blocks
-        return `<pre><code class="language-${lang}">${text}</code></pre>`;
+        const escapedText = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return `<pre><code class="language-${lang || ''}">${escapedText}</code></pre>`;
       };
 
       try {
@@ -42,94 +73,118 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, pre
         setHtmlContent(html);
       } catch (e) {
         console.error('Markdown parsing error', e);
-        setHtmlContent('<p class="text-red-500">Error parsing markdown</p>');
+        setHtmlContent('<p style="color: #ef4444;">Error parsing markdown</p>');
       }
     };
     parseMarkdown();
   }, [code]);
 
-  // Run Mermaid after HTML is rendered
-  useEffect(() => {
-    if (containerRef.current) {
-      const mermaidDivs = containerRef.current.querySelectorAll('.mermaid');
+  // Render Mermaid blocks after HTML is set
+  const renderMermaidBlocks = useCallback(async () => {
+    if (!containerRef.current || !mermaidRef.current) return;
 
-      // Clear any existing SVGs to force re-render with new theme
-      mermaidDivs.forEach((div) => {
-        if (div.getAttribute('data-processed')) {
-          div.removeAttribute('data-processed');
-          const svg = div.querySelector('svg');
-          if (svg) {
-            div.innerHTML = div.getAttribute('data-original-content') || '';
-          }
-        } else {
-          // Store original content for future theme changes
-          div.setAttribute('data-original-content', div.textContent || '');
-        }
-      });
+    const blocks = containerRef.current.querySelectorAll('.mermaid-block');
+    if (blocks.length === 0) return;
 
-      // Run mermaid rendering
-      if (mermaidDivs.length > 0) {
-        mermaid
-          .run({
-            nodes: Array.from(mermaidDivs) as HTMLElement[],
-          })
-          .catch((err) => console.error('Mermaid run error in Markdown:', err));
+    for (const block of Array.from(blocks)) {
+      const mermaidCode = decodeURIComponent(block.getAttribute('data-mermaid-code') || '');
+      const id = block.getAttribute('data-mermaid-id') || `md-mermaid-${++mermaidRenderCounter}`;
+
+      if (!mermaidCode) continue;
+
+      try {
+        const { svg } = await mermaidRef.current.render(id, mermaidCode.trim());
+        block.innerHTML = svg;
+        block.classList.add('mermaid-rendered');
+      } catch (err) {
+        console.error('Mermaid render error in Markdown:', err);
+        block.innerHTML = `<div style="color: #ef4444; padding: 0.5rem; border: 1px solid #fecaca; border-radius: 0.375rem; font-size: 0.875rem;">⚠ Mermaid syntax error</div>`;
       }
     }
-  }, [htmlContent, theme]);
+  }, []);
+
+  useEffect(() => {
+    if (htmlContent && mermaidLoaded) {
+      // Wait a tick for DOM update
+      requestAnimationFrame(() => {
+        renderMermaidBlocks();
+      });
+    }
+  }, [htmlContent, theme, mermaidLoaded, renderMermaidBlocks]);
 
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden bg-gray-50 transition-colors duration-200 dark:bg-gray-950">
+    <div className="relative flex h-full w-full flex-col overflow-hidden bg-white transition-colors duration-200 dark:bg-gray-950">
       {/* Inject Custom CSS */}
       {previewConfig?.customCss && <style>{previewConfig.customCss}</style>}
 
-      <div
-        ref={containerRef}
-        className="prose preview-container max-w-none flex-1 overflow-auto p-8"
-        style={{
-          fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-        }}
-      >
-        {/* Default Theme Overrides (can be overridden by customCss) */}
-        <style>{`
-            .prose { color: ${theme === 'dark' ? '#e5e7eb' : '#1f2937'}; max-width: none; }
-            .prose h1 { color: ${theme === 'dark' ? '#10b981' : '#059669'}; font-weight: 700; font-size: 2.25em; margin-top: 0; margin-bottom: 0.8888889em; line-height: 1.1111111; }
-            .prose h2 { color: ${theme === 'dark' ? '#34d399' : '#047857'}; margin-top: 2em; margin-bottom: 1em; font-weight: 600; font-size: 1.5em; line-height: 1.3333333; }
-            .prose h3 { color: ${theme === 'dark' ? '#6ee7b7' : '#065f46'}; font-weight: 600; font-size: 1.25em; margin-top: 1.6em; margin-bottom: 0.6em; line-height: 1.6; }
-            .prose h4 { color: ${theme === 'dark' ? '#a7f3d0' : '#065f46'}; font-weight: 600; margin-top: 1.5em; margin-bottom: 0.5em; line-height: 1.5; }
-            .prose p { color: ${theme === 'dark' ? '#e5e7eb' : '#374151'}; line-height: 1.75; margin-top: 1.25em; margin-bottom: 1.25em; }
-            .prose strong { color: ${theme === 'dark' ? '#f3f4f6' : '#111827'}; font-weight: 600; }
-            .prose code { color: ${theme === 'dark' ? '#fbbf24' : '#d97706'}; background-color: ${theme === 'dark' ? '#374151' : '#f3f4f6'}; padding: 0.2em 0.4em; border-radius: 0.25rem; font-size: 0.875em; font-weight: 400; }
-            .prose a { color: ${theme === 'dark' ? '#60a5fa' : '#2563eb'}; text-decoration: underline; font-weight: 500; }
-            .prose a:hover { color: ${theme === 'dark' ? '#93c5fd' : '#1d4ed8'}; }
-            .prose blockquote { border-left: 4px solid ${theme === 'dark' ? '#10b981' : '#d1fae5'}; color: ${theme === 'dark' ? '#d1d5db' : '#6b7280'}; font-style: italic; padding-left: 1em; margin: 1.6em 0; }
+      {/* Empty State */}
+      {!code && (
+        <div className="flex flex-1 items-center justify-center">
+          <div className="flex flex-col items-center gap-3 text-gray-400 dark:text-gray-600">
+            <div className="rounded-2xl bg-gray-100 p-4 dark:bg-gray-800">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/>
+                <path d="M14 2v6h6"/>
+                <path d="M16 13H8M16 17H8M10 9H8"/>
+              </svg>
+            </div>
+            <p className="text-sm font-medium">在左側輸入 Markdown 內容開始撰寫</p>
+          </div>
+        </div>
+      )}
 
-            /* 列表樣式 */
-            .prose ul, .prose ol { color: ${theme === 'dark' ? '#e5e7eb' : '#374151'}; margin-top: 1.25em; margin-bottom: 1.25em; padding-left: 1.625em; }
-            .prose ul { list-style-type: disc; }
-            .prose ol { list-style-type: decimal; }
-            .prose li { margin-top: 0.5em; margin-bottom: 0.5em; line-height: 1.75; }
-            .prose ul ul, .prose ul ol, .prose ol ul, .prose ol ol { margin-top: 0.75em; margin-bottom: 0.75em; }
-            .prose ul > li { position: relative; padding-left: 0.375em; }
-            .prose ol > li { position: relative; padding-left: 0.375em; }
-            .prose ul > li::marker { color: ${theme === 'dark' ? '#9ca3af' : '#6b7280'}; }
-            .prose ol > li::marker { color: ${theme === 'dark' ? '#9ca3af' : '#6b7280'}; font-weight: 400; }
+      {code && (
+        <div
+          ref={containerRef}
+          className="markdown-preview flex-1 overflow-auto p-8"
+        >
+          {/* Scoped Markdown Styles */}
+          <style>{`
+            .markdown-preview { color: ${theme === 'dark' ? '#e5e7eb' : '#1f2937'}; max-width: 48rem; margin: 0 auto; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+            .markdown-preview h1 { color: ${theme === 'dark' ? '#f1f5f9' : '#0f172a'}; font-weight: 800; font-size: 2.25em; margin-top: 0; margin-bottom: 0.8em; line-height: 1.15; letter-spacing: -0.025em; }
+            .markdown-preview h2 { color: ${theme === 'dark' ? '#e2e8f0' : '#1e293b'}; margin-top: 2em; margin-bottom: 0.8em; font-weight: 700; font-size: 1.5em; line-height: 1.33; letter-spacing: -0.02em; padding-bottom: 0.3em; border-bottom: 1px solid ${theme === 'dark' ? '#334155' : '#e2e8f0'}; }
+            .markdown-preview h3 { color: ${theme === 'dark' ? '#cbd5e1' : '#334155'}; font-weight: 600; font-size: 1.25em; margin-top: 1.6em; margin-bottom: 0.6em; line-height: 1.6; }
+            .markdown-preview h4 { color: ${theme === 'dark' ? '#94a3b8' : '#475569'}; font-weight: 600; margin-top: 1.5em; margin-bottom: 0.5em; line-height: 1.5; }
+            .markdown-preview p { color: ${theme === 'dark' ? '#cbd5e1' : '#374151'}; line-height: 1.8; margin-top: 1.25em; margin-bottom: 1.25em; }
+            .markdown-preview strong { color: ${theme === 'dark' ? '#f1f5f9' : '#0f172a'}; font-weight: 600; }
+            .markdown-preview em { font-style: italic; }
+            .markdown-preview del { text-decoration: line-through; opacity: 0.7; }
+            .markdown-preview code { color: ${theme === 'dark' ? '#fbbf24' : '#c2410c'}; background-color: ${theme === 'dark' ? '#1e293b' : '#f1f5f9'}; padding: 0.2em 0.4em; border-radius: 0.375rem; font-size: 0.875em; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+            .markdown-preview a { color: ${theme === 'dark' ? '#60a5fa' : '#2563eb'}; text-decoration: underline; text-underline-offset: 2px; font-weight: 500; transition: color 0.15s; }
+            .markdown-preview a:hover { color: ${theme === 'dark' ? '#93c5fd' : '#1d4ed8'}; }
+            .markdown-preview blockquote { border-left: 3px solid ${theme === 'dark' ? '#0ea5e9' : '#0ea5e9'}; color: ${theme === 'dark' ? '#94a3b8' : '#64748b'}; font-style: italic; padding: 0.5em 1em; margin: 1.6em 0; background: ${theme === 'dark' ? '#0f172a' : '#f8fafc'}; border-radius: 0 0.5rem 0.5rem 0; }
 
-            /* 任務列表 */
-            .prose input[type="checkbox"] { margin-right: 0.5em; }
+            /* Lists */
+            .markdown-preview ul, .markdown-preview ol { color: ${theme === 'dark' ? '#cbd5e1' : '#374151'}; margin-top: 1em; margin-bottom: 1em; padding-left: 1.625em; }
+            .markdown-preview ul { list-style-type: disc; }
+            .markdown-preview ol { list-style-type: decimal; }
+            .markdown-preview li { margin-top: 0.4em; margin-bottom: 0.4em; line-height: 1.75; }
+            .markdown-preview ul > li::marker { color: ${theme === 'dark' ? '#64748b' : '#94a3b8'}; }
+            .markdown-preview ol > li::marker { color: ${theme === 'dark' ? '#64748b' : '#94a3b8'}; font-weight: 500; }
 
-            .prose pre { background-color: ${theme === 'dark' ? '#1f2937' : '#f1f5f9'}; border-radius: 0.5rem; padding: 1rem; overflow-x: auto; margin: 1.7142857em 0; }
-            .prose pre code { background-color: transparent; padding: 0; color: ${theme === 'dark' ? '#e5e7eb' : '#1f2937'}; font-size: 0.875em; line-height: 1.7142857; }
-            .prose table { color: ${theme === 'dark' ? '#e5e7eb' : '#374151'}; width: 100%; border-collapse: collapse; margin-top: 2em; margin-bottom: 2em; }
-            .prose th { color: ${theme === 'dark' ? '#f3f4f6' : '#111827'}; font-weight: 600; border-bottom: 1px solid ${theme === 'dark' ? '#374151' : '#d1d5db'}; padding: 0.5714286em; text-align: left; }
-            .prose td { padding: 0.5714286em; border-bottom: 1px solid ${theme === 'dark' ? '#374151' : '#e5e7eb'}; }
-            .prose hr { border-color: ${theme === 'dark' ? '#374151' : '#e5e7eb'}; margin: 3em 0; }
-            .prose img { margin-top: 2em; margin-bottom: 2em; border-radius: 0.375rem; }
-            .mermaid { display: flex; justify-content: center; margin: 2rem 0; background: transparent; }
-        `}</style>
+            /* Task lists */
+            .markdown-preview input[type="checkbox"] { margin-right: 0.5em; accent-color: #0ea5e9; }
 
-        <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
-      </div>
+            /* Code blocks */
+            .markdown-preview pre { background-color: ${theme === 'dark' ? '#0f172a' : '#f8fafc'}; border: 1px solid ${theme === 'dark' ? '#1e293b' : '#e2e8f0'}; border-radius: 0.75rem; padding: 1.25rem; overflow-x: auto; margin: 1.5em 0; }
+            .markdown-preview pre code { background-color: transparent; padding: 0; color: ${theme === 'dark' ? '#e2e8f0' : '#334155'}; font-size: 0.875em; line-height: 1.7; border-radius: 0; }
+
+            /* Tables */
+            .markdown-preview table { color: ${theme === 'dark' ? '#e2e8f0' : '#374151'}; width: 100%; border-collapse: collapse; margin: 2em 0; font-size: 0.875em; }
+            .markdown-preview th { color: ${theme === 'dark' ? '#f1f5f9' : '#0f172a'}; font-weight: 600; border-bottom: 2px solid ${theme === 'dark' ? '#334155' : '#cbd5e1'}; padding: 0.75em 1em; text-align: left; }
+            .markdown-preview td { padding: 0.75em 1em; border-bottom: 1px solid ${theme === 'dark' ? '#1e293b' : '#f1f5f9'}; }
+            .markdown-preview tr:hover td { background: ${theme === 'dark' ? '#1e293b' : '#f8fafc'}; }
+            .markdown-preview hr { border: none; border-top: 1px solid ${theme === 'dark' ? '#334155' : '#e2e8f0'}; margin: 2.5em 0; }
+            .markdown-preview img { margin: 1.5em 0; border-radius: 0.75rem; max-width: 100%; }
+
+            /* Mermaid blocks */
+            .mermaid-block { display: flex; justify-content: center; margin: 2rem 0; padding: 1rem; background: ${theme === 'dark' ? '#0f172a' : '#f8fafc'}; border-radius: 0.75rem; border: 1px solid ${theme === 'dark' ? '#1e293b' : '#e2e8f0'}; }
+            .mermaid-rendered { border: none; background: transparent; }
+          `}</style>
+
+          <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+        </div>
+      )}
     </div>
   );
 });

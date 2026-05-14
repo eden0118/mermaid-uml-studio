@@ -30,6 +30,34 @@
   --color-error: #ef4444;
   --color-warning: #f5980b;
   --color-info: #3b82f6;
+
+  /* Custom animations */
+  --animate-fade-in: fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-slide-up: slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-slide-down: slide-down 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-scale-in: scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-pulse-soft: pulse-soft 2s ease-in-out infinite;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slide-down {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes scale-in {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
 }
 
 @layer base {
@@ -46,18 +74,29 @@
 
 @layer utilities {
   .glass {
-    @apply bg-white/70 backdrop-blur-md dark:bg-gray-900/70 border border-white/20 dark:border-gray-800/20;
+    @apply bg-white/80 backdrop-blur-xl dark:bg-gray-900/80 border-b border-gray-200/50 dark:border-gray-800/50;
   }
   .glass-card {
-    @apply bg-white/70 backdrop-blur-md dark:bg-gray-900/70 border border-white/20 dark:border-gray-800/20 shadow-xl shadow-gray-200/50 dark:shadow-black/50 transition-all duration-300;
+    @apply bg-white/80 backdrop-blur-xl dark:bg-gray-900/80 border border-gray-200/50 dark:border-gray-800/50 shadow-xl shadow-gray-200/30 dark:shadow-black/30 transition-all duration-300;
+  }
+  /* Hide scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center px-4 py-2 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-95;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer active:scale-95;
   }
   .btn-primary {
     @apply bg-primary-600 text-white shadow-lg shadow-primary-600/20 hover:bg-primary-700 hover:shadow-primary-700/30;
+  }
+  .btn-secondary {
+    @apply bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700;
   }
 }
