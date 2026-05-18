@@ -8,9 +8,6 @@ import React, { useState } from 'react';
 import {
   Download,
   Upload,
-  Save,
-  FileText,
-  LogIn,
   Moon,
   Sun,
   FileCode,
@@ -29,13 +26,7 @@ interface ToolbarProps {
   setFileName: (name: string) => void;
   onLoadLocal: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSaveLocal: () => void;
-  onGoogleLogin: () => void;
-  onSaveToDrive: () => void;
-  onLoadFromDrive: () => void;
-  isDriveConnected: boolean;
   status: AppStatus;
-  theme: Theme;
-  toggleTheme: () => void;
   autoUpdate: boolean;
   toggleAutoUpdate: () => void;
   onSelectTemplate: (code: string) => void;
@@ -49,13 +40,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   setFileName,
   onLoadLocal,
   onSaveLocal,
-  onGoogleLogin,
-  onSaveToDrive,
-  onLoadFromDrive,
-  isDriveConnected,
   status,
-  theme,
-  toggleTheme,
   autoUpdate,
   toggleAutoUpdate,
   onSelectTemplate,
@@ -218,49 +203,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <Download size={15} aria-hidden="true" />
           </button>
         </div>
-
-        {/* Drive Actions Group */}
-        <div className={`flex items-center gap-0.5 rounded-lg p-0.5 transition-colors ${isDriveConnected ? 'bg-emerald-50 dark:bg-emerald-900/10' : 'bg-gray-100 dark:bg-gray-800/50'}`} role="group" aria-label="Google Drive 操作">
-          {!isDriveConnected ? (
-            <button
-              onClick={onGoogleLogin}
-              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-gray-500 transition-colors hover:bg-white hover:text-primary-600 hover:shadow-sm dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-primary-400"
-              aria-label="連接 Google Drive"
-            >
-              <LogIn size={14} aria-hidden="true" />
-              <span className="hidden sm:inline">Drive</span>
-            </button>
-          ) : (
-            <>
-              <button
-                onClick={onLoadFromDrive}
-                className="rounded-md p-1.5 text-emerald-600 transition-colors hover:bg-white hover:shadow-sm dark:text-emerald-400 dark:hover:bg-gray-700"
-                title="從 Google Drive 開啟"
-                aria-label="從 Google Drive 開啟"
-              >
-                <FileText size={15} aria-hidden="true" />
-              </button>
-              <button
-                onClick={onSaveToDrive}
-                className="rounded-md p-1.5 text-emerald-600 transition-colors hover:bg-white hover:shadow-sm dark:text-emerald-400 dark:hover:bg-gray-700"
-                title="儲存到 Google Drive"
-                aria-label="儲存到 Google Drive"
-              >
-                <Save size={15} aria-hidden="true" />
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* Theme Toggle */}
-        <button
-          onClick={toggleTheme}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-all hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-white"
-          title={`切換至${theme === 'light' ? '深色' : '淺色'}模式`}
-          aria-label={`切換至${theme === 'light' ? '深色' : '淺色'}模式`}
-        >
-          {theme === 'light' ? <Moon size={16} aria-hidden="true" /> : <Sun size={16} aria-hidden="true" />}
-        </button>
       </div>
     </div>
   );

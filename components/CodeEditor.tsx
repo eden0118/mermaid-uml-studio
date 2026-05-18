@@ -24,9 +24,12 @@ const CodeEditor: React.FC<CodeEditorProps> = memo(
     const lineNumbersRef = useRef<HTMLDivElement>(null);
     const [lineCount, setLineCount] = useState(1);
 
-    // 計算行數
+    // 計算行數 (防抖處理)
     useEffect(() => {
-      setLineCount(value.split('\n').length);
+      const timer = setTimeout(() => {
+        setLineCount(value.split('\n').length);
+      }, 100);
+      return () => clearTimeout(timer);
     }, [value]);
 
     // 同步滾動
@@ -55,11 +58,11 @@ const CodeEditor: React.FC<CodeEditorProps> = memo(
     }, [value, onChange]);
 
     return (
-      <div className="relative flex h-full w-full overflow-hidden bg-white dark:bg-gray-900">
+      <div className="relative flex h-full w-full overflow-hidden bg-white dark:bg-[#0d1117]">
         {/* 行號顯示 */}
         <div
           ref={lineNumbersRef}
-          className="w-12 shrink-0 select-none overflow-hidden border-r border-gray-100 bg-gray-50/80 py-4 pr-3 text-right font-mono text-gray-300 transition-colors duration-200 dark:border-gray-800 dark:bg-gray-900/80 dark:text-gray-600 scrollbar-hide"
+          className="w-12 shrink-0 select-none overflow-hidden border-r border-gray-200 bg-[#f6f8fa] py-4 pr-3 text-right font-mono text-gray-400 transition-colors duration-200 dark:border-gray-800 dark:bg-[#161b22] dark:text-gray-500 scrollbar-hide"
           style={{
             lineHeight: config.lineHeight,
             fontSize: `${config.fontSize}px`,
@@ -74,7 +77,7 @@ const CodeEditor: React.FC<CodeEditorProps> = memo(
         {/* 文字編輯區 */}
         <textarea
           ref={textareaRef}
-          className="h-full flex-1 resize-none bg-transparent p-4 text-gray-800 outline-none transition-colors duration-200 dark:text-gray-100 overflow-y-auto scrollbar-hide"
+          className="h-full flex-1 resize-none bg-transparent p-4 text-[#24292f] outline-none transition-colors duration-200 dark:text-[#c9d1d9] overflow-y-auto scrollbar-hide"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onScroll={handleScroll}

@@ -1,35 +1,41 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
+.dark {
+  color-scheme: dark;
+}
+
 @theme {
-  --color-primary-50: #f0f9ff;
-  --color-primary-100: #e0f2fe;
-  --color-primary-200: #bae6fd;
-  --color-primary-300: #7dd3fc;
-  --color-primary-400: #38bdf8;
-  --color-primary-500: #0ea5e9;
-  --color-primary-600: #0284c7;
-  --color-primary-700: #0369a1;
-  --color-primary-800: #075985;
-  --color-primary-900: #0c4a6e;
-  --color-primary-950: #082f49;
+  --color-primary-50: #f0f7ff;
+  --color-primary-100: #dbedff;
+  --color-primary-200: #c8e1ff;
+  --color-primary-300: #79b8ff;
+  --color-primary-400: #2188ff;
+  --color-primary-500: #0366d6;
+  --color-primary-600: #005cc5;
+  --color-primary-700: #004a99;
+  --color-primary-800: #003d7a;
+  --color-primary-900: #002d5c;
+  --color-primary-950: #001d3d;
 
-  /* 映射 gray 到 slate 以相容舊代碼 */
-  --color-gray-50: var(--color-slate-50);
-  --color-gray-100: var(--color-slate-100);
-  --color-gray-200: var(--color-slate-200);
-  --color-gray-300: var(--color-slate-300);
-  --color-gray-400: var(--color-slate-400);
-  --color-gray-500: var(--color-slate-500);
-  --color-gray-600: var(--color-slate-600);
-  --color-gray-700: var(--color-slate-700);
-  --color-gray-800: var(--color-slate-800);
-  --color-gray-900: var(--color-slate-900);
-  --color-gray-950: var(--color-slate-950);
+  /* GitHub Colors */
+  --color-gray-50: #f6f8fa;
+  --color-gray-100: #eaecef;
+  --color-gray-200: #d1d5da;
+  --color-gray-300: #959da5;
+  --color-gray-400: #6a737d;
+  --color-gray-500: #586069;
+  --color-gray-600: #444d56;
+  --color-gray-700: #2f363d;
+  --color-gray-800: #24292e;
+  --color-gray-900: #1b1f23;
+  --color-gray-950: #0d1117;
 
-  --color-success: #10b981;
-  --color-error: #ef4444;
-  --color-warning: #f5980b;
-  --color-info: #3b82f6;
+  --color-success: #28a745;
+  --color-error: #cb2431;
+  --color-warning: #f9c513;
+  --color-info: #0366d6;
 
   /* Custom animations */
   --animate-fade-in: fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -62,22 +68,23 @@
 
 @layer base {
   * {
-    @apply border-gray-200 dark:border-gray-700;
+    @apply border-[#30363d] transition-colors duration-200;
   }
-  html, body {
-    @apply h-full antialiased;
+  html {
+    @apply bg-[#0d1117];
+    color-scheme: dark;
   }
   body {
-    @apply bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100;
+    @apply bg-[#0d1117] text-[#c9d1d9] min-h-screen;
   }
 }
 
 @layer utilities {
   .glass {
-    @apply bg-white/80 backdrop-blur-xl dark:bg-gray-900/80 border-b border-gray-200/50 dark:border-gray-800/50;
+    @apply bg-[#0d1117]/80 backdrop-blur-xl border-b border-[#30363d];
   }
   .glass-card {
-    @apply bg-white/80 backdrop-blur-xl dark:bg-gray-900/80 border border-gray-200/50 dark:border-gray-800/50 shadow-xl shadow-gray-200/30 dark:shadow-black/30 transition-all duration-300;
+    @apply bg-[#161b22] border border-[#30363d] shadow-sm transition-all duration-300;
   }
   /* Hide scrollbar */
   .scrollbar-hide {
@@ -91,12 +98,17 @@
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer active:scale-95;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md font-semibold text-sm transition-all duration-200 cursor-pointer active:scale-95 border border-transparent;
   }
   .btn-primary {
-    @apply bg-primary-600 text-white shadow-lg shadow-primary-600/20 hover:bg-primary-700 hover:shadow-primary-700/30;
+    @apply bg-[#2ea44f] text-white hover:bg-[#2c974b] border-[#1b1f2326] shadow-sm;
   }
   .btn-secondary {
-    @apply bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700;
+    @apply bg-[#21262d] text-[#c9d1d9] hover:bg-[#30363d] border-[#f0f6fc1a];
   }
+}
+
+/* 額外修正：確保 CodeEditor 在切換時有正確背景 */
+textarea, .line-numbers {
+  @apply bg-[#0d1117] text-[#c9d1d9] transition-colors duration-200;
 }

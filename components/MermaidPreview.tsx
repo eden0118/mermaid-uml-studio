@@ -45,18 +45,6 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = memo(({ code, theme }) => 
     return () => { cancelled = true; };
   }, []);
 
-  // Initialize mermaid when theme changes
-  useEffect(() => {
-    if (!mermaidRef.current) return;
-    mermaidRef.current.initialize({
-      startOnLoad: false,
-      theme: theme === 'dark' ? 'dark' : 'default',
-      securityLevel: 'loose',
-      fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-      logLevel: 'error',
-    });
-  }, [theme, mermaidLoaded]);
-
   // Render diagram
   useEffect(() => {
     if (!mermaidRef.current || !mermaidLoaded) return;
@@ -68,10 +56,36 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = memo(({ code, theme }) => 
       return;
     }
 
-    const timeoutId = setTimeout(async () => {
+    const renderDiagram = async () => {
       try {
         setError(null);
         setIsRendering(true);
+
+        // 確保在渲染前初始化正確的主題
+        mermaidRef.current!.initialize({
+          startOnLoad: false,
+          theme: theme === 'dark' ? 'dark' : 'default',
+          securityLevel: 'loose',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          themeVariables: theme === 'dark' ? {
+            background: '#0d1117',
+            primaryColor: '#161b22',
+            primaryTextColor: '#c9d1d9',
+            primaryBorderColor: '#30363d',
+            lineColor: '#8b949e',
+            secondaryColor: '#0d1117',
+            tertiaryColor: '#161b22',
+          } : {
+            background: '#ffffff',
+            primaryColor: '#f6f8fa',
+            primaryTextColor: '#24292f',
+            primaryBorderColor: '#d0d7de',
+            lineColor: '#24292f',
+            secondaryColor: '#ffffff',
+            tertiaryColor: '#f6f8fa',
+          }
+        });
+
         const id = `mermaid-diagram-${++renderCounter}`;
         const { svg } = await mermaidRef.current!.render(id, trimmed);
         setSvgContent(svg);
@@ -100,14 +114,14 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = memo(({ code, theme }) => 
       } finally {
         setIsRendering(false);
       }
-    }, 350);
+    };
 
-    return () => clearTimeout(timeoutId);
+    renderDiagram();
   }, [code, theme, mermaidLoaded]);
 
   // Zoom handlers
-  const handleZoomIn = useCallback(() => setScale((prev) => Math.min(prev + 0.2, 3)), []);
-  const handleZoomOut = useCallback(() => setScale((prev) => Math.max(prev - 0.2, 0.2)), []);
+  const handleZoomIn = useCallback(() => setScale((prev) => prev + 0.2), []);
+  const handleZoomOut = useCallback(() => setScale((prev) => Math.max(prev - 0.2, 0.1)), []);
   const handleResetZoom = useCallback(() => {
     setScale(1);
     setPosition({ x: 0, y: 0 });
@@ -135,7 +149,7 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = memo(({ code, theme }) => 
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
       const delta = e.deltaY > 0 ? -0.1 : 0.1;
-      setScale((prev) => Math.min(Math.max(prev + delta, 0.2), 3));
+      setScale((prev) => Math.max(prev + delta, 0.1));
     }
   }, []);
 
@@ -153,12 +167,12 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = memo(({ code, theme }) => 
   }, [svgContent]);
 
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden bg-gray-50 transition-colors duration-200 dark:bg-gray-900">
+    <div className="relative flex h-full w-full flex-col overflow-hidden bg-[#0d1117] transition-colors duration-200">
       {/* Dot Pattern Background */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.25] dark:opacity-[0.1]"
+        className="pointer-events-none absolute inset-0 opacity-[0.1]"
         style={{
-          backgroundImage: `radial-gradient(${theme === 'dark' ? '#6b7280' : '#94a3b8'} 1px, transparent 1px)`,
+          backgroundImage: `radial-gradient(#30363d 1px, transparent 1px)`,
           backgroundSize: '20px 20px',
         }}
       />

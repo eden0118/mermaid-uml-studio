@@ -180,6 +180,4 @@ export const UML_TEMPLATES = [
   },
 ];
 
-export const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-export const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
 export const MARKDOWN_MIME = 'text/markdown';

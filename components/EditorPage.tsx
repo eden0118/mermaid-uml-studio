@@ -9,15 +9,24 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import CodeEditor from '@/components/CodeEditor';
-import MermaidPreview from '@/components/MermaidPreview';
-import MarkdownPreview from '@/components/MarkdownPreview';
 import Toolbar from '@/components/Toolbar';
 import SettingsModal from '@/components/SettingsModal';
-import useGoogleDrive from '@/hooks/useGoogleDrive';
 import { getDefaultEditorConfig, getDefaultPreviewConfig } from '@/lib/theme.config';
 import { AppStatus } from '@/types/types';
 import type { Theme, EditorConfig, PreviewConfig, ViewMode } from '@/types/types';
+
+// 延遲載入預覽元件，減少初始 Bundle 大小
+const MermaidPreview = dynamic(() => import('@/components/MermaidPreview'), {
+  ssr: false,
+  loading: () => <div className="h-full w-full animate-pulse bg-gray-100 dark:bg-gray-800" />,
+});
+
+const MarkdownPreview = dynamic(() => import('@/components/MarkdownPreview'), {
+  ssr: false,
+  loading: () => <div className="h-full w-full animate-pulse bg-gray-100 dark:bg-gray-800" />,
+});
 
 interface EditorPageProps {
   viewMode: ViewMode;
@@ -30,44 +39,41 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
   const initializedRef = useRef(false);
 
   // 狀態管理
-  const [code, setCode] = useState<string>(defaultCode);
-  const [previewCode, setPreviewCode] = useState<string>(defaultCode);
+  const [code, setCode] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`draft_${viewMode}`);
+      return saved || defaultCode;
+    }
+    return defaultCode;
+  });
+  const [previewCode, setPreviewCode] = useState<string>(code);
+
+  // 自動儲存草稿
+  useEffect(() => {
+    localStorage.setItem(`draft_${viewMode}`, code);
+  }, [code, viewMode]);
   const [fileName, setFileName] = useState<string>(defaultFileName);
-  const [status, setStatus] = useState<AppStatus>(AppStatus.IDLE);
-  const [theme, setTheme] = useState<Theme>('dark');
   const [autoUpdate, setAutoUpdate] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // 防抖處理預覽更新
+  useEffect(() => {
+    if (!autoUpdate) return;
+    
+    const timer = setTimeout(() => {
+      setPreviewCode(code);
+    }, 300); // 300ms 延遲
+
+    return () => clearTimeout(timer);
+  }, [code, autoUpdate]);
 
   // 配置管理
   const [editorConfig, setEditorConfig] = useState<EditorConfig>(getDefaultEditorConfig());
   const [previewConfig, setPreviewConfig] = useState<PreviewConfig>(getDefaultPreviewConfig());
 
-  const { isDriveConnected, login, saveFileToDrive, pickFile } = useGoogleDrive();
-
-  // 初始化主題 — 只在 mount 時讀取系統偏好
-  useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
-    const mql = window.matchMedia('(prefers-color-scheme: dark)');
-    const prefersDark = mql.matches;
-    setTheme(prefersDark ? 'dark' : 'light');
-  }, []);
-
-  // 套用主題到 DOM
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-  }, [theme]);
-
-  // 包裝 setCode：同時更新 previewCode（如果 autoUpdate 開啟）
+  // 包裝 setCode
   const handleCodeChange = useCallback((newCode: string) => {
     setCode(newCode);
-    // autoUpdate 由 closure 中的 state 判斷，此處使用 functional update 避免 stale
-    setAutoUpdate((currentAutoUpdate) => {
-      if (currentAutoUpdate) {
-        setPreviewCode(newCode);
-      }
-      return currentAutoUpdate; // 不改變 autoUpdate 本身
-    });
   }, []);
 
   // 切換 autoUpdate
@@ -75,20 +81,11 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
     setAutoUpdate((prev) => {
       const next = !prev;
       if (next) {
-        // 當重新開啟 autoUpdate 時，同步 previewCode
-        setCode((currentCode) => {
-          setPreviewCode(currentCode);
-          return currentCode;
-        });
+        setPreviewCode(code);
       }
       return next;
     });
-  }, []);
-
-  // 主題切換
-  const toggleTheme = useCallback(() => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
-  }, []);
+  }, [code]);
 
   // 本地檔案載入
   const handleLoadLocal = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,39 +116,6 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
     URL.revokeObjectURL(url);
   }, [code, fileName]);
 
-  // Google Drive 儲存
-  const handleSaveToDrive = useCallback(async () => {
-    try {
-      setStatus(AppStatus.SAVING);
-      await saveFileToDrive(fileName, code);
-      setStatus(AppStatus.SUCCESS);
-    } catch (e) {
-      console.error(e);
-      setStatus(AppStatus.ERROR);
-      alert('儲存到 Drive 失敗');
-    } finally {
-      setTimeout(() => setStatus(AppStatus.IDLE), 2000);
-    }
-  }, [code, fileName, saveFileToDrive]);
-
-  // Google Drive 載入
-  const handleLoadFromDrive = useCallback(async () => {
-    try {
-      setStatus(AppStatus.LOADING);
-      const fileData = await pickFile();
-      if (fileData) {
-        setCode(fileData.content);
-        setPreviewCode(fileData.content);
-        setFileName(fileData.name);
-      }
-    } catch (e) {
-      console.error(e);
-      alert('從 Drive 載入失敗');
-    } finally {
-      setStatus(AppStatus.IDLE);
-    }
-  }, [pickFile]);
-
   // 模板選擇
   const handleSelectTemplate = useCallback((templateCode: string) => {
     setCode(templateCode);
@@ -159,22 +123,16 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
   }, []);
 
   return (
-    <div className="flex h-screen flex-col bg-white transition-colors duration-300 dark:bg-gray-950">
+    <div className="flex h-screen flex-col bg-[#0d1117] transition-colors duration-300">
       <div className="flex flex-1 overflow-hidden relative">
         {/* 左側：編輯器 */}
-        <div className="relative z-10 flex w-1/2 flex-col border-r border-gray-200/50 bg-white transition-all duration-300 dark:border-gray-800/50 dark:bg-gray-950">
+        <div className="relative z-10 flex w-1/2 flex-col border-r border-[#30363d] bg-[#0d1117] transition-all duration-300">
           <Toolbar
             fileName={fileName}
             setFileName={setFileName}
             onLoadLocal={handleLoadLocal}
             onSaveLocal={handleSaveLocal}
-            onGoogleLogin={login}
-            onSaveToDrive={handleSaveToDrive}
-            onLoadFromDrive={handleLoadFromDrive}
-            isDriveConnected={isDriveConnected}
-            status={status}
-            theme={theme}
-            toggleTheme={toggleTheme}
+            status={AppStatus.IDLE}
             autoUpdate={autoUpdate}
             toggleAutoUpdate={handleToggleAutoUpdate}
             onSelectTemplate={handleSelectTemplate}
@@ -184,7 +142,7 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
           />
 
           <div className="flex-1 overflow-hidden p-3">
-            <div className="h-full rounded-xl overflow-hidden border border-gray-200/50 dark:border-gray-800/50">
+            <div className="h-full rounded-xl overflow-hidden border border-[#30363d]">
               <CodeEditor
                 value={code}
                 onChange={handleCodeChange}
@@ -197,12 +155,12 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
         </div>
 
         {/* 右側：預覽 */}
-        <div className="relative h-full w-1/2 bg-gray-50 transition-all duration-300 dark:bg-gray-900">
+        <div className="relative h-full w-1/2 bg-[#0d1117] transition-all duration-300">
           <div className="h-full w-full overflow-hidden">
             {viewMode === 'mermaid' ? (
-              <MermaidPreview code={previewCode} theme={theme} />
+              <MermaidPreview code={previewCode} theme="dark" />
             ) : (
-              <MarkdownPreview code={previewCode} theme={theme} previewConfig={previewConfig} />
+              <MarkdownPreview code={previewCode} theme="dark" previewConfig={previewConfig} />
             )}
           </div>
         </div>

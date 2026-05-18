@@ -4,17 +4,13 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Mermaid UML Studio',
   description:
-    'The all-in-one editor for diagrams and documentation with Google Drive integration.',
+    'The all-in-one editor for diagrams and documentation.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="zh-TW" suppressHydrationWarning className="h-full">
-      <head>
-        <script src="https://accounts.google.com/gsi/client" async defer />
-        <script src="https://apis.google.com/js/api.js" async defer />
-      </head>
-      <body className="h-full overflow-hidden antialiased">{children}</body>
+    <html lang="zh-TW" suppressHydrationWarning className="h-full dark">
+      <body className="h-full overflow-hidden antialiased bg-[#0d1117] text-[#c9d1d9]">{children}</body>
     </html>
   );
 }
