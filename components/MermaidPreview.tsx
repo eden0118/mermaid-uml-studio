@@ -64,25 +64,21 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = memo(({ code, theme }) => 
         // 確保在渲染前初始化正確的主題
         mermaidRef.current!.initialize({
           startOnLoad: false,
-          theme: theme === 'dark' ? 'dark' : 'default',
+          theme: 'dark',
           securityLevel: 'loose',
           fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-          themeVariables: theme === 'dark' ? {
+          themeVariables: {
             background: '#0d1117',
-            primaryColor: '#161b22',
-            primaryTextColor: '#c9d1d9',
-            primaryBorderColor: '#30363d',
-            lineColor: '#8b949e',
-            secondaryColor: '#0d1117',
-            tertiaryColor: '#161b22',
-          } : {
-            background: '#ffffff',
-            primaryColor: '#f6f8fa',
-            primaryTextColor: '#24292f',
-            primaryBorderColor: '#d0d7de',
-            lineColor: '#24292f',
-            secondaryColor: '#ffffff',
-            tertiaryColor: '#f6f8fa',
+            primaryColor: '#1f6feb',
+            primaryTextColor: '#f0f6fc',
+            primaryBorderColor: '#58a6ff',
+            lineColor: '#58a6ff',
+            secondaryColor: '#238636',
+            tertiaryColor: '#d29922',
+            noteBkgColor: '#d29922',
+            noteTextColor: '#0d1117',
+            errorBkgColor: '#f85149',
+            errorTextColor: '#f0f6fc',
           }
         });
 

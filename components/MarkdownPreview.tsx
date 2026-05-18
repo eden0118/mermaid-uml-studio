@@ -167,47 +167,55 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, pre
         >
           {/* Scoped Markdown Styles */}
           <style>{`
-            .markdown-preview { color: ${theme === 'dark' ? '#c9d1d9' : '#24292f'}; max-width: 48rem; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"; line-height: 1.5; }
-            .markdown-preview h1 { color: ${theme === 'dark' ? '#f0f6fc' : '#24292f'}; font-weight: 600; font-size: 2em; margin-top: 0; margin-bottom: 16px; padding-bottom: 0.3em; border-bottom: 1px solid ${theme === 'dark' ? '#30363d' : '#eaecef'}; }
-            .markdown-preview h2 { color: ${theme === 'dark' ? '#f0f6fc' : '#24292f'}; margin-top: 24px; margin-bottom: 16px; font-weight: 600; font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid ${theme === 'dark' ? '#30363d' : '#eaecef'}; }
-            .markdown-preview h3 { color: ${theme === 'dark' ? '#f0f6fc' : '#24292f'}; font-weight: 600; font-size: 1.25em; margin-top: 24px; margin-bottom: 16px; }
-            .markdown-preview h4 { color: ${theme === 'dark' ? '#f0f6fc' : '#24292f'}; font-weight: 600; font-size: 1em; margin-top: 24px; margin-bottom: 16px; }
+            .markdown-preview { color: #c9d1d9; max-width: 48rem; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"; line-height: 1.6; }
+            
+            /* 繽紛標題 */
+            .markdown-preview h1 { color: #58a6ff; font-weight: 800; font-size: 2.25em; margin-top: 0; margin-bottom: 16px; padding-bottom: 0.3em; border-bottom: 1px solid #30363d; }
+            .markdown-preview h2 { color: #79c0ff; margin-top: 24px; margin-bottom: 16px; font-weight: 700; font-size: 1.75em; padding-bottom: 0.3em; border-bottom: 1px solid #30363d; }
+            .markdown-preview h3 { color: #a371f7; font-weight: 700; font-size: 1.4em; margin-top: 24px; margin-bottom: 16px; }
+            .markdown-preview h4 { color: #ffab70; font-weight: 700; font-size: 1.2em; margin-top: 24px; margin-bottom: 16px; }
+            
             .markdown-preview p { margin-top: 0; margin-bottom: 16px; }
-            .markdown-preview strong { font-weight: 600; }
-            .markdown-preview em { font-style: italic; }
-            .markdown-preview del { text-decoration: line-through; }
-            .markdown-preview code { color: ${theme === 'dark' ? '#c9d1d9' : '#24292f'}; background-color: ${theme === 'dark' ? '#6e768166' : '#afb8c133'}; padding: 0.2em 0.4em; border-radius: 6px; font-size: 85%; font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace; }
-            .markdown-preview a { color: ${theme === 'dark' ? '#58a6ff' : '#0969da'}; text-decoration: none; }
-            .markdown-preview a:hover { text-decoration: underline; }
-            .markdown-preview blockquote { border-left: 0.25em solid ${theme === 'dark' ? '#30363d' : '#d0d7de'}; color: ${theme === 'dark' ? '#8b949e' : '#57606a'}; padding: 0 1em; margin: 0 0 16px 0; }
+            
+            /* 強調與連結 */
+            .markdown-preview strong { color: #ff7b72; font-weight: 800; }
+            .markdown-preview em { color: #ffa657; font-style: italic; }
+            .markdown-preview del { text-decoration: line-through; opacity: 0.6; }
+            .markdown-preview a { color: #2f81f7; text-decoration: none; border-bottom: 1px dashed #2f81f7; }
+            .markdown-preview a:hover { color: #58a6ff; border-bottom-style: solid; }
+            
+            /* 區塊引用 */
+            .markdown-preview blockquote { border-left: 0.3em solid #a371f7; color: #8b949e; padding: 0.5em 1em; margin: 0 0 16px 0; background: #161b22; border-radius: 0 8px 8px 0; }
 
-            /* Lists */
+            /* 代碼樣式 */
+            .markdown-preview code { color: #7ee787; background-color: #6e76814d; padding: 0.2em 0.4em; border-radius: 6px; font-size: 90%; font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Monaco, Consolas, monospace; }
+            .markdown-preview pre { background-color: #0d1117; border: 1px solid #30363d; border-radius: 12px; padding: 16px; overflow: auto; margin-top: 0; margin-bottom: 16px; line-height: 1.45; }
+            .markdown-preview pre code { background-color: transparent; padding: 0; color: #d1d5db; font-size: 100%; border-radius: 0; }
+
+            /* 列表 */
             .markdown-preview ul, .markdown-preview ol { margin-top: 0; margin-bottom: 16px; padding-left: 2em; }
             .markdown-preview ul { list-style-type: disc; }
             .markdown-preview ol { list-style-type: decimal; }
             .markdown-preview li { margin-top: 0.25em; }
-            .markdown-preview li > p { margin-top: 16px; }
+            .markdown-preview ul > li::marker { color: #58a6ff; }
+            .markdown-preview ol > li::marker { color: #58a6ff; font-weight: bold; }
 
-            /* Task lists */
-            .markdown-preview input[type="checkbox"] { margin-right: 0.5em; vertical-align: middle; }
+            /* 任務列表 */
+            .markdown-preview input[type="checkbox"] { margin-right: 0.5em; vertical-align: middle; accent-color: #58a6ff; }
 
-            /* Code blocks */
-            .markdown-preview pre { background-color: ${theme === 'dark' ? '#161b22' : '#f6f8fa'}; border-radius: 6px; padding: 16px; overflow: auto; margin-top: 0; margin-bottom: 16px; line-height: 1.45; }
-            .markdown-preview pre code { background-color: transparent; padding: 0; color: inherit; font-size: 100%; border-radius: 0; }
-
-            /* Tables */
-            .markdown-preview table { display: block; width: max-content; max-width: 100%; overflow: auto; border-spacing: 0; border-collapse: collapse; margin-top: 0; margin-bottom: 16px; }
-            .markdown-preview th { font-weight: 600; border: 1px solid ${theme === 'dark' ? '#30363d' : '#d0d7de'}; padding: 6px 13px; }
-            .markdown-preview td { border: 1px solid ${theme === 'dark' ? '#30363d' : '#d0d7de'}; padding: 6px 13px; }
-            .markdown-preview tr { background-color: ${theme === 'dark' ? '#0d1117' : '#ffffff'}; border-top: 1px solid ${theme === 'dark' ? '#21262d' : '#c6cbd1'}; }
-            .markdown-preview tr:nth-child(2n) { background-color: ${theme === 'dark' ? '#161b22' : '#f6f8fa'}; }
+            /* 表格 */
+            .markdown-preview table { display: block; width: max-content; max-width: 100%; overflow: auto; border-spacing: 0; border-collapse: collapse; margin-top: 0; margin-bottom: 16px; border-radius: 8px; }
+            .markdown-preview th { font-weight: bold; border: 1px solid #30363d; padding: 10px 16px; background-color: #161b22; color: #79c0ff; }
+            .markdown-preview td { border: 1px solid #30363d; padding: 8px 16px; }
+            .markdown-preview tr { background-color: #0d1117; }
+            .markdown-preview tr:nth-child(2n) { background-color: #161b22; }
             
-            .markdown-preview hr { height: 0.25em; padding: 0; margin: 24px 0; background-color: ${theme === 'dark' ? '#30363d' : '#d0d7de'}; border: 0; }
-            .markdown-preview img { max-width: 100%; box-sizing: content-box; background-color: ${theme === 'dark' ? '#0d1117' : '#ffffff'}; }
+            .markdown-preview hr { height: 2px; padding: 0; margin: 24px 0; background: linear-gradient(to dotted, #30363d, transparent); background-color: #30363d; border: 0; }
+            .markdown-preview img { max-width: 100%; border-radius: 12px; border: 1px solid #30363d; }
 
-            /* Mermaid blocks */
-            .mermaid-block { display: flex; justify-content: center; margin: 16px 0; padding: 16px; background: ${theme === 'dark' ? '#161b22' : '#f6f8fa'}; border-radius: 6px; border: 1px solid ${theme === 'dark' ? '#30363d' : '#d0d7de'}; }
-            .mermaid-rendered { border: none; background: transparent; padding: 0; }
+            /* Mermaid 區塊修正 */
+            .mermaid-block { display: flex; justify-content: center; margin: 24px 0; padding: 20px; background: #161b22; border-radius: 12px; border: 1px solid #30363d; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+            .mermaid-rendered { border: none; background: transparent; padding: 0; box-shadow: none; }
           `}</style>
 
           <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
