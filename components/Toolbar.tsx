@@ -29,7 +29,8 @@ interface ToolbarProps {
   status: AppStatus;
   autoUpdate: boolean;
   toggleAutoUpdate: () => void;
-  onSelectTemplate: (code: string) => void;
+  onSelectTemplate: (name: string, code: string) => void;
+  selectedTemplateName?: string;
   viewMode: ViewMode;
   onGoHome: () => void;
   onOpenSettings: () => void;
@@ -44,6 +45,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   autoUpdate,
   toggleAutoUpdate,
   onSelectTemplate,
+  selectedTemplateName,
   viewMode,
   onGoHome,
   onOpenSettings,
@@ -84,13 +86,13 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <div className="relative">
               <button
                 onClick={() => setShowTemplates(!showTemplates)}
-                className="btn btn-secondary !px-2.5 !py-1.5 !text-xs !gap-1.5"
+                className="btn btn-secondary !px-2.5 !py-1.5 !text-xs !gap-1.5 min-w-[80px]"
                 aria-label="選擇模板"
                 aria-expanded={showTemplates}
                 aria-haspopup="true"
               >
                 <LayoutTemplate size={14} aria-hidden="true" />
-                <span>模板</span>
+                <span>{selectedTemplateName || '模板'}</span>
                 <ChevronDown
                   size={12}
                   className={`transition-transform duration-200 ${showTemplates ? 'rotate-180' : ''}`}
@@ -106,7 +108,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                       <button
                         key={t.name}
                         onClick={() => {
-                          onSelectTemplate(t.code);
+                          onSelectTemplate(t.name, t.code);
                           setShowTemplates(false);
                         }}
                         className="w-full rounded-lg px-3 py-2 text-left text-xs font-medium text-gray-600 transition-colors hover:bg-primary-50 hover:text-primary-600 dark:text-gray-300 dark:hover:bg-primary-900/20 dark:hover:text-primary-400"

@@ -47,6 +47,7 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
     return defaultCode;
   });
   const [previewCode, setPreviewCode] = useState<string>(code);
+  const [selectedTemplateName, setSelectedTemplateName] = useState<string>('');
 
   // 自動儲存草稿
   useEffect(() => {
@@ -74,6 +75,8 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
   // 包裝 setCode
   const handleCodeChange = useCallback((newCode: string) => {
     setCode(newCode);
+    // 如果手動修改內容，清除選中的模板名稱
+    setSelectedTemplateName('');
   }, []);
 
   // 切換 autoUpdate
@@ -117,9 +120,10 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
   }, [code, fileName]);
 
   // 模板選擇
-  const handleSelectTemplate = useCallback((templateCode: string) => {
+  const handleSelectTemplate = useCallback((name: string, templateCode: string) => {
     setCode(templateCode);
     setPreviewCode(templateCode);
+    setSelectedTemplateName(name);
   }, []);
 
   return (
@@ -136,6 +140,7 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
             autoUpdate={autoUpdate}
             toggleAutoUpdate={handleToggleAutoUpdate}
             onSelectTemplate={handleSelectTemplate}
+            selectedTemplateName={selectedTemplateName}
             viewMode={viewMode}
             onGoHome={() => router.push('/')}
             onOpenSettings={() => setIsSettingsOpen(true)}
