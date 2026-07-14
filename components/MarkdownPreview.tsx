@@ -2,7 +2,7 @@
  * MarkdownPreview 元件
  * ============================================
  * 使用 marked.js 渲染 Markdown 的預覽元件
- * 支援嵌入式 Mermaid 圖表
+ * 支援嵌入式 Mermaid 圖表、可收合標題、Side Outline
  */
 
 'use client';
@@ -17,14 +17,42 @@ interface MarkdownPreviewProps {
   previewConfig?: PreviewConfig;
 }
 
+interface HeadingInfo {
+  id: string;
+  text: string;
+  level: number;
+}
+
 let mermaidRenderCounter = 0;
+
+/**
+ * 取得 heading 下方所屬 section 的所有 DOM 元素
+ * （直到遇到同層級或更高層級的 heading 為止）
+ */
+function getSectionElements(heading: Element, level: number): HTMLElement[] {
+  const elements: HTMLElement[] = [];
+  let sibling = heading.nextElementSibling;
+  while (sibling) {
+    const tagMatch = sibling.tagName.match(/^H([1-6])$/);
+    if (tagMatch && parseInt(tagMatch[1]) <= level) break;
+    elements.push(sibling as HTMLElement);
+    sibling = sibling.nextElementSibling;
+  }
+  return elements;
+}
 
 const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, previewConfig }) => {
   const [htmlContent, setHtmlContent] = useState<string>('');
   const [isRendering, setIsRendering] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const mermaidRef = useRef<typeof import('mermaid').default | null>(null);
   const [mermaidLoaded, setMermaidLoaded] = useState(false);
+
+  // Outline & collapsible state
+  const [headings, setHeadings] = useState<HeadingInfo[]>([]);
+  const [isOutlineOpen, setIsOutlineOpen] = useState(false);
+  const collapsedRef = useRef<Set<string>>(new Set());
 
   // Dynamic import mermaid (avoid SSR crash)
   useEffect(() => {
@@ -43,16 +71,29 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, pre
     const parseMarkdown = async () => {
       if (!code) {
         setHtmlContent('');
+        setHeadings([]);
         return;
       }
 
       setIsRendering(true);
       const renderer = new marked.Renderer();
+      let headingIndex = 0;
+
+      // Heading renderer: 加入 ID、data-level、toggle icon
+      renderer.heading = ({ text, depth }: { text: string; depth: number }) => {
+        const stripped = text.replace(/<[^>]*>/g, '').trim();
+        const slug = stripped
+          .toLowerCase()
+          .replace(/[^\w\u4e00-\u9fff]+/g, '-')
+          .replace(/^-|-$/g, '');
+        const id = `md-h-${slug || headingIndex}`;
+        headingIndex++;
+        return `<h${depth} id="${id}" class="collapsible-heading" data-level="${depth}"><span class="heading-toggle-icon" aria-hidden="true"></span>${text}</h${depth}>`;
+      };
 
       renderer.code = ({ text, lang }) => {
         if (lang === 'mermaid') {
           const id = `md-mermaid-${++mermaidRenderCounter}`;
-          // Encode text to preserve it for mermaid rendering
           const encoded = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
           return `<div class="mermaid-block" data-mermaid-id="${id}" data-mermaid-code="${encodeURIComponent(text)}">${encoded}</div>`;
         }
@@ -73,11 +114,76 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, pre
     parseMarkdown();
   }, [code]);
 
+  // 設定可收合標題 + 提取 Outline 資訊
+  useEffect(() => {
+    const contentEl = contentRef.current;
+    if (!contentEl || !htmlContent) return;
+
+    // 等待 DOM 更新完成
+    const frameId = requestAnimationFrame(() => {
+      const headingEls = contentEl.querySelectorAll('.collapsible-heading');
+      const extracted: HeadingInfo[] = [];
+      const cleanupFns: (() => void)[] = [];
+
+      headingEls.forEach((el) => {
+        const heading = el as HTMLElement;
+        const id = heading.id;
+        const level = parseInt(heading.dataset.level || '1');
+        const text = heading.textContent?.trim() || '';
+
+        extracted.push({ id, text, level });
+
+        // 還原收合狀態
+        if (collapsedRef.current.has(id)) {
+          heading.classList.add('collapsed');
+          const sectionEls = getSectionElements(heading, level);
+          sectionEls.forEach((el) => (el.style.display = 'none'));
+        }
+
+        // Click handler：收合/展開
+        const handleToggle = (e: Event) => {
+          if ((e.target as HTMLElement).closest('a')) return;
+
+          const isNowCollapsed = heading.classList.toggle('collapsed');
+
+          if (isNowCollapsed) {
+            collapsedRef.current.add(id);
+            const sectionEls = getSectionElements(heading, level);
+            sectionEls.forEach((el) => (el.style.display = 'none'));
+          } else {
+            collapsedRef.current.delete(id);
+            const sectionEls = getSectionElements(heading, level);
+            sectionEls.forEach((el) => (el.style.display = ''));
+
+            // 重新套用子標題的收合狀態
+            sectionEls.forEach((el) => {
+              const subMatch = el.tagName.match(/^H([1-6])$/);
+              if (subMatch && collapsedRef.current.has(el.id)) {
+                const subLevel = parseInt(subMatch[1]);
+                const subSection = getSectionElements(el, subLevel);
+                subSection.forEach((s) => (s.style.display = 'none'));
+              }
+            });
+          }
+        };
+
+        heading.addEventListener('click', handleToggle);
+        cleanupFns.push(() => heading.removeEventListener('click', handleToggle));
+      });
+
+      setHeadings(extracted);
+    });
+
+    return () => {
+      cancelAnimationFrame(frameId);
+    };
+  }, [htmlContent]);
+
   // Render Mermaid blocks after HTML is set
   const renderMermaidBlocks = useCallback(async () => {
-    if (!containerRef.current || !mermaidRef.current) return;
+    if (!contentRef.current || !mermaidRef.current) return;
 
-    const blocks = containerRef.current.querySelectorAll('.mermaid-block');
+    const blocks = contentRef.current.querySelectorAll('.mermaid-block');
     if (blocks.length === 0) return;
 
     // 確保在渲染前初始化正確的主題
@@ -120,12 +226,52 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, pre
 
   useEffect(() => {
     if (htmlContent && mermaidLoaded) {
-      // Wait a tick for DOM update
       requestAnimationFrame(() => {
         renderMermaidBlocks();
       });
     }
   }, [htmlContent, mermaidLoaded, renderMermaidBlocks]);
+
+  // 點擊 Outline 項目 → 捲動到對應標題
+  const scrollToHeading = useCallback((id: string) => {
+    const el = document.getElementById(id);
+    if (el) {
+      // 若父層標題已收合，先展開
+      let parent = el.previousElementSibling;
+      while (parent) {
+        const parentMatch = parent.tagName.match(/^H([1-6])$/);
+        if (parentMatch) {
+          const parentLevel = parseInt(parentMatch[1]);
+          const elLevel = parseInt(el.dataset.level || '1');
+          if (parentLevel < elLevel && parent.classList.contains('collapsed')) {
+            parent.classList.remove('collapsed');
+            collapsedRef.current.delete(parent.id);
+            const sectionEls = getSectionElements(parent, parentLevel);
+            sectionEls.forEach((s) => ((s as HTMLElement).style.display = ''));
+          }
+        }
+        parent = parent.previousElementSibling;
+      }
+
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setIsOutlineOpen(false);
+    }
+  }, []);
+
+  // 點擊 Outline 面板外部時關閉
+  useEffect(() => {
+    if (!isOutlineOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('[data-outline-panel]') && !target.closest('[data-outline-toggle]')) {
+        setIsOutlineOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOutlineOpen]);
 
   return (
     <div className="relative flex h-full w-full flex-col overflow-hidden bg-[#0d1117] transition-colors duration-200">
@@ -157,65 +303,171 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, pre
       )}
 
       {code && (
-        <div
-          ref={containerRef}
-          className="markdown-preview flex-1 overflow-auto p-8"
-        >
-          {/* Scoped Markdown Styles */}
-          <style>{`
-            .markdown-preview { color: #c9d1d9; max-width: 48rem; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"; line-height: 1.6; }
-            
-            /* 繽紛標題 */
-            .markdown-preview h1 { color: #58a6ff; font-weight: 800; font-size: 2.25em; margin-top: 0; margin-bottom: 16px; padding-bottom: 0.3em; border-bottom: 1px solid #30363d; }
-            .markdown-preview h2 { color: #79c0ff; margin-top: 24px; margin-bottom: 16px; font-weight: 700; font-size: 1.75em; padding-bottom: 0.3em; border-bottom: 1px solid #30363d; }
-            .markdown-preview h3 { color: #a371f7; font-weight: 700; font-size: 1.4em; margin-top: 24px; margin-bottom: 16px; }
-            .markdown-preview h4 { color: #ffab70; font-weight: 700; font-size: 1.2em; margin-top: 24px; margin-bottom: 16px; }
-            
-            .markdown-preview p { margin-top: 0; margin-bottom: 16px; }
-            
-            /* 強調與連結 */
-            .markdown-preview strong { color: #ff7b72; font-weight: 800; }
-            .markdown-preview em { color: #ffa657; font-style: italic; }
-            .markdown-preview del { text-decoration: line-through; opacity: 0.6; }
-            .markdown-preview a { color: #2f81f7; text-decoration: none; border-bottom: 1px dashed #2f81f7; }
-            .markdown-preview a:hover { color: #58a6ff; border-bottom-style: solid; }
-            
-            /* 區塊引用 */
-            .markdown-preview blockquote { border-left: 0.3em solid #a371f7; color: #8b949e; padding: 0.5em 1em; margin: 0 0 16px 0; background: #161b22; border-radius: 0 8px 8px 0; }
+        <>
+          {/* Outline Toggle Button — 右上角小 icon */}
+          {headings.length > 0 && (
+            <button
+              data-outline-toggle
+              onClick={() => setIsOutlineOpen((prev) => !prev)}
+              className={`absolute top-3 right-3 z-30 flex h-8 w-8 items-center justify-center rounded-lg border border-[#30363d] text-[#8b949e] transition-all duration-200 cursor-pointer active:scale-95 ${
+                isOutlineOpen
+                  ? 'bg-[#30363d] text-[#c9d1d9]'
+                  : 'bg-[#21262d]/80 backdrop-blur-sm hover:bg-[#30363d] hover:text-[#c9d1d9]'
+              }`}
+              title={isOutlineOpen ? '關閉大綱' : '顯示大綱'}
+              aria-label={isOutlineOpen ? '關閉大綱' : '顯示大綱'}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="8" y1="6" x2="21" y2="6" />
+                <line x1="8" y1="12" x2="21" y2="12" />
+                <line x1="8" y1="18" x2="21" y2="18" />
+                <line x1="3" y1="6" x2="3.01" y2="6" />
+                <line x1="3" y1="12" x2="3.01" y2="12" />
+                <line x1="3" y1="18" x2="3.01" y2="18" />
+              </svg>
+            </button>
+          )}
 
-            /* 代碼樣式 */
-            .markdown-preview code { color: #7ee787; background-color: #6e76814d; padding: 0.2em 0.4em; border-radius: 6px; font-size: 90%; font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Monaco, Consolas, monospace; }
-            .markdown-preview pre { background-color: #0d1117; border: 1px solid #30363d; border-radius: 12px; padding: 16px; overflow: auto; margin-top: 0; margin-bottom: 16px; line-height: 1.45; }
-            .markdown-preview pre code { background-color: transparent; padding: 0; color: #d1d5db; font-size: 100%; border-radius: 0; }
+          {/* Outline Panel — 浮動面板 */}
+          <div
+            data-outline-panel
+            className={`absolute top-12 right-3 z-20 w-64 max-h-[60vh] rounded-xl bg-[#161b22]/95 backdrop-blur-xl border border-[#30363d] shadow-2xl transition-all duration-200 origin-top-right ${
+              isOutlineOpen && headings.length > 0
+                ? 'opacity-100 scale-100 pointer-events-auto'
+                : 'opacity-0 scale-95 pointer-events-none'
+            }`}
+          >
+            <div className="px-3 py-2.5 border-b border-[#30363d]">
+              <h3 className="text-xs font-semibold text-[#8b949e] uppercase tracking-wider">大綱</h3>
+            </div>
+            <nav className="p-1.5 overflow-auto max-h-[calc(60vh-40px)] scrollbar-hide">
+              {headings.map((h) => {
+                const indent = (h.level - 1) * 12;
+                return (
+                  <button
+                    key={h.id}
+                    onClick={() => scrollToHeading(h.id)}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm text-[#c9d1d9] hover:bg-[#21262d] hover:text-[#58a6ff] transition-colors duration-150 cursor-pointer group"
+                    style={{ paddingLeft: `${12 + indent}px` }}
+                  >
+                    <span
+                      className="h-1.5 w-1.5 rounded-full flex-shrink-0 transition-transform duration-150 group-hover:scale-125"
+                      style={{
+                        backgroundColor:
+                          h.level === 1 ? '#58a6ff' :
+                          h.level === 2 ? '#79c0ff' :
+                          h.level === 3 ? '#a371f7' :
+                          '#ffab70',
+                      }}
+                    />
+                    <span className="truncate">{h.text}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
 
-            /* 列表 */
-            .markdown-preview ul, .markdown-preview ol { margin-top: 0; margin-bottom: 16px; padding-left: 2em; }
-            .markdown-preview ul { list-style-type: disc; }
-            .markdown-preview ol { list-style-type: decimal; }
-            .markdown-preview li { margin-top: 0.25em; }
-            .markdown-preview ul > li::marker { color: #58a6ff; }
-            .markdown-preview ol > li::marker { color: #58a6ff; font-weight: bold; }
+          {/* Main Content */}
+          <div
+            ref={scrollContainerRef}
+            className="markdown-preview flex-1 overflow-auto p-8"
+          >
+            {/* Scoped Markdown Styles */}
+            <style>{`
+              .markdown-preview { color: #c9d1d9; width: 100%; max-width: 80rem; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"; line-height: 1.6; }
+              
+              /* 繽紛標題 */
+              .markdown-preview h1 { color: #58a6ff; font-weight: 800; font-size: 2.25em; margin-top: 0; margin-bottom: 16px; padding-bottom: 0.3em; border-bottom: 1px solid #30363d; }
+              .markdown-preview h2 { color: #79c0ff; margin-top: 24px; margin-bottom: 16px; font-weight: 700; font-size: 1.75em; padding-bottom: 0.3em; border-bottom: 1px solid #30363d; }
+              .markdown-preview h3 { color: #a371f7; font-weight: 700; font-size: 1.4em; margin-top: 24px; margin-bottom: 16px; }
+              .markdown-preview h4 { color: #ffab70; font-weight: 700; font-size: 1.2em; margin-top: 24px; margin-bottom: 16px; }
+              
+              .markdown-preview p { margin-top: 0; margin-bottom: 16px; }
+              
+              /* Collapsible Headings */
+              .collapsible-heading {
+                cursor: pointer;
+                user-select: none;
+                position: relative;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                border-radius: 6px;
+                transition: background-color 0.15s ease;
+              }
+              .collapsible-heading:hover { background-color: #ffffff08; }
 
-            /* 任務列表 */
-            .markdown-preview input[type="checkbox"] { margin-right: 0.5em; vertical-align: middle; accent-color: #58a6ff; }
+              .heading-toggle-icon {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 18px;
+                height: 18px;
+                flex-shrink: 0;
+                border-radius: 4px;
+                transition: background-color 0.15s ease;
+              }
+              .collapsible-heading:hover .heading-toggle-icon { background-color: #ffffff10; }
 
-            /* 表格 */
-            .markdown-preview table { display: block; width: max-content; max-width: 100%; overflow: auto; border-spacing: 0; border-collapse: collapse; margin-top: 0; margin-bottom: 16px; border-radius: 8px; }
-            .markdown-preview th { font-weight: bold; border: 1px solid #30363d; padding: 10px 16px; background-color: #161b22; color: #79c0ff; }
-            .markdown-preview td { border: 1px solid #30363d; padding: 8px 16px; }
-            .markdown-preview tr { background-color: #0d1117; }
-            .markdown-preview tr:nth-child(2n) { background-color: #161b22; }
-            
-            .markdown-preview hr { height: 2px; padding: 0; margin: 24px 0; background: linear-gradient(to dotted, #30363d, transparent); background-color: #30363d; border: 0; }
-            .markdown-preview img { max-width: 100%; border-radius: 12px; border: 1px solid #30363d; }
+              .heading-toggle-icon::before {
+                content: '';
+                display: block;
+                width: 0;
+                height: 0;
+                border-left: 5px solid currentColor;
+                border-top: 4px solid transparent;
+                border-bottom: 4px solid transparent;
+                opacity: 0.4;
+                transition: transform 0.2s ease, opacity 0.2s ease;
+                transform: rotate(90deg);
+              }
+              .collapsible-heading:hover .heading-toggle-icon::before { opacity: 0.7; }
+              .collapsible-heading.collapsed .heading-toggle-icon::before { transform: rotate(0deg); opacity: 0.6; }
 
-            /* Mermaid 區塊修正 */
-            .mermaid-block { display: flex; justify-content: center; margin: 24px 0; padding: 20px; background: #161b22; border-radius: 12px; border: 1px solid #30363d; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
-            .mermaid-rendered { border: none; background: transparent; padding: 0; box-shadow: none; }
-          `}</style>
+              /* 強調與連結 */
+              .markdown-preview strong { color: #ff7b72; font-weight: 800; }
+              .markdown-preview em { color: #ffa657; font-style: italic; }
+              .markdown-preview del { text-decoration: line-through; opacity: 0.6; }
+              .markdown-preview a { color: #2f81f7; text-decoration: none; border-bottom: 1px dashed #2f81f7; pointer-events: auto; }
+              .markdown-preview a:hover { color: #58a6ff; border-bottom-style: solid; }
+              
+              /* 區塊引用 */
+              .markdown-preview blockquote { border-left: 0.3em solid #a371f7; color: #8b949e; padding: 0.5em 1em; margin: 0 0 16px 0; background: #161b22; border-radius: 0 8px 8px 0; }
 
-          <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
-        </div>
+              /* 代碼樣式 */
+              .markdown-preview code { color: #7ee787; background-color: #6e76814d; padding: 0.2em 0.4em; border-radius: 6px; font-size: 90%; font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Monaco, Consolas, monospace; }
+              .markdown-preview pre { background-color: #0d1117; border: 1px solid #30363d; border-radius: 12px; padding: 16px; overflow: auto; margin-top: 0; margin-bottom: 16px; line-height: 1.45; }
+              .markdown-preview pre code { background-color: transparent; padding: 0; color: #d1d5db; font-size: 100%; border-radius: 0; }
+
+              /* 列表 */
+              .markdown-preview ul, .markdown-preview ol { margin-top: 0; margin-bottom: 16px; padding-left: 2em; }
+              .markdown-preview ul { list-style-type: disc; }
+              .markdown-preview ol { list-style-type: decimal; }
+              .markdown-preview li { margin-top: 0.25em; }
+              .markdown-preview ul > li::marker { color: #58a6ff; }
+              .markdown-preview ol > li::marker { color: #58a6ff; font-weight: bold; }
+
+              /* 任務列表 */
+              .markdown-preview input[type="checkbox"] { margin-right: 0.5em; vertical-align: middle; accent-color: #58a6ff; }
+
+              /* 表格 */
+              .markdown-preview table { display: block; width: max-content; max-width: 100%; overflow: auto; border-spacing: 0; border-collapse: collapse; margin-top: 0; margin-bottom: 16px; border-radius: 8px; }
+              .markdown-preview th { font-weight: bold; border: 1px solid #30363d; padding: 10px 16px; background-color: #161b22; color: #79c0ff; }
+              .markdown-preview td { border: 1px solid #30363d; padding: 8px 16px; }
+              .markdown-preview tr { background-color: #0d1117; }
+              .markdown-preview tr:nth-child(2n) { background-color: #161b22; }
+              
+              .markdown-preview hr { height: 2px; padding: 0; margin: 24px 0; background: linear-gradient(to dotted, #30363d, transparent); background-color: #30363d; border: 0; }
+              .markdown-preview img { max-width: 100%; border-radius: 12px; border: 1px solid #30363d; }
+
+              /* Mermaid 區塊修正 */
+              .mermaid-block { display: flex; justify-content: center; margin: 24px 0; padding: 20px; background: #161b22; border-radius: 12px; border: 1px solid #30363d; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+              .mermaid-rendered { border: none; background: transparent; padding: 0; box-shadow: none; }
+            `}</style>
+
+            <div ref={contentRef} dangerouslySetInnerHTML={{ __html: htmlContent }} />
+          </div>
+        </>
       )}
     </div>
   );

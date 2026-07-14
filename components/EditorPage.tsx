@@ -49,6 +49,9 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
   const [previewCode, setPreviewCode] = useState<string>(code);
   const [selectedTemplateName, setSelectedTemplateName] = useState<string>('');
 
+  // 編輯器面板收合狀態
+  const [isEditorCollapsed, setIsEditorCollapsed] = useState(false);
+
   // 自動儲存草稿
   useEffect(() => {
     localStorage.setItem(`draft_${viewMode}`, code);
@@ -130,7 +133,11 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
     <div className="flex h-screen flex-col bg-[#0d1117] transition-colors duration-300">
       <div className="flex flex-1 overflow-hidden relative">
         {/* 左側：編輯器 */}
-        <div className="relative z-10 flex w-1/2 flex-col border-r border-[#30363d] bg-[#0d1117] transition-all duration-300">
+        <div
+          className={`relative z-10 flex flex-col border-r border-[#30363d] bg-[#0d1117] transition-all duration-300 ease-in-out ${
+            isEditorCollapsed ? 'w-0 min-w-0 overflow-hidden border-r-0' : 'w-1/2'
+          }`}
+        >
           <Toolbar
             fileName={fileName}
             setFileName={setFileName}
@@ -159,8 +166,34 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
           </div>
         </div>
 
+        {/* 收合/展開按鈕 */}
+        <button
+          onClick={() => setIsEditorCollapsed((prev) => !prev)}
+          className="absolute top-1/2 z-20 flex h-16 w-5 -translate-y-1/2 cursor-pointer items-center justify-center rounded-r-md bg-[#21262d] border border-l-0 border-[#30363d] text-[#8b949e] hover:bg-[#30363d] hover:text-[#c9d1d9] transition-all duration-200 hover:w-6 active:scale-95"
+          style={{ left: isEditorCollapsed ? 0 : 'calc(50% - 1px)' }}
+          title={isEditorCollapsed ? '展開編輯器' : '收合編輯器'}
+          aria-label={isEditorCollapsed ? '展開編輯器' : '收合編輯器'}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className={`h-4 w-4 transition-transform duration-200 ${isEditorCollapsed ? 'rotate-180' : ''}`}
+          >
+            <path
+              fillRule="evenodd"
+              d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </button>
+
         {/* 右側：預覽 */}
-        <div className="relative h-full w-1/2 bg-[#0d1117] transition-all duration-300">
+        <div
+          className={`relative h-full bg-[#0d1117] transition-all duration-300 ease-in-out ${
+            isEditorCollapsed ? 'w-full' : 'w-1/2'
+          }`}
+        >
           <div className="h-full w-full overflow-hidden">
             {viewMode === 'mermaid' ? (
               <MermaidPreview code={previewCode} theme="dark" />

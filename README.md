@@ -9,6 +9,9 @@ A high-performance, all-in-one editor for Mermaid diagrams and Markdown document
 - Intelligent Dark Mode: Automatic theme switching based on system preferences with manual toggle.
 - Google Drive Connectivity: Securely save and load files directly from your Google Drive.
 - Real-time Sync: Low-latency preview updates with optional manual update mode.
+- Collapsible Editor Panel: Toggle the code editor to maximize preview area with smooth animations.
+- Collapsible Headings: Click any heading in Markdown preview to collapse/expand its section content.
+- Side Outline: Floating table-of-contents panel with heading hierarchy, smooth scroll navigation, and auto-collapse to icon.
 - Industry Templates: One-click access to standard UML and diagram templates.
 - Advanced Customization: Fine-grained control over font size, line height, and custom CSS overrides.
 - Interactive Canvas: Responsive zoom and pan functionality for complex diagram inspection.
