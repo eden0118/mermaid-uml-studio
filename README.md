@@ -11,7 +11,7 @@ A high-performance, all-in-one editor for Mermaid diagrams and Markdown document
 - Real-time Sync: Low-latency preview updates with optional manual update mode.
 - Collapsible Editor Panel: Toggle the code editor to maximize preview area with smooth animations.
 - Collapsible Headings: Click any heading in Markdown preview to collapse/expand its section content.
-- Side Outline: Floating table-of-contents panel with heading hierarchy, smooth scroll navigation, and auto-collapse to icon.
+- Side Outline: Floating table-of-contents panel for smaller views, which automatically transitions into a clean, transparent, sticky Docusaurus-style outline on the right side of the document when the code editor is collapsed on large screens.
 - Industry Templates: One-click access to standard UML and diagram templates.
 - Advanced Customization: Fine-grained control over font size, line height, and custom CSS overrides.
 - Interactive Canvas: Responsive zoom and pan functionality for complex diagram inspection.
@@ -65,10 +65,11 @@ mermaid-uml-studio/
 │   ├── MermaidPreview.tsx
 │   ├── MarkdownPreview.tsx
 │   └── Toolbar.tsx     # Global action bar
-├── hooks/              # Custom React hooks (Google Drive, etc.)
-├── lib/                # Core logic, constants, and utilities
+├── hooks/              # Custom React hooks
+├── lib/                # Core logic, constants (theme, error helpers)
 ├── types/              # Centralized TypeScript definitions
-└── styles/             # Global CSS and Tailwind configuration
+├── AGENTS.md           # Project rules and agent instructions
+└── app/globals.css     # Global styles and Tailwind configuration
 ```
 
 ## Configuration (Optional)
