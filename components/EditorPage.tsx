@@ -198,7 +198,12 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
             {viewMode === 'mermaid' ? (
               <MermaidPreview code={previewCode} theme="dark" />
             ) : (
-              <MarkdownPreview code={previewCode} theme="dark" previewConfig={previewConfig} />
+              <MarkdownPreview
+                code={previewCode}
+                theme="dark"
+                previewConfig={previewConfig}
+                isEditorCollapsed={isEditorCollapsed}
+              />
             )}
           </div>
         </div>

@@ -15,6 +15,7 @@ interface MarkdownPreviewProps {
   code: string;
   theme: Theme;
   previewConfig?: PreviewConfig;
+  isEditorCollapsed?: boolean;
 }
 
 interface HeadingInfo {
@@ -41,7 +42,7 @@ function getSectionElements(heading: Element, level: number): HTMLElement[] {
   return elements;
 }
 
-const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, previewConfig }) => {
+const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, previewConfig, isEditorCollapsed = false }) => {
   const [htmlContent, setHtmlContent] = useState<string>('');
   const [isRendering, setIsRendering] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -52,7 +53,34 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, pre
   // Outline & collapsible state
   const [headings, setHeadings] = useState<HeadingInfo[]>([]);
   const [isOutlineOpen, setIsOutlineOpen] = useState(false);
+  const [isLargeScreen, setIsLargeScreen] = useState(false);
   const collapsedRef = useRef<Set<string>>(new Set());
+
+  const isOutlineSidebar = isEditorCollapsed && isLargeScreen;
+
+  // 偵測視窗大小
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    let prevLarge = window.innerWidth >= 1024;
+    setIsLargeScreen(prevLarge);
+
+    const handleResize = () => {
+      const large = window.innerWidth >= 1024;
+      setIsLargeScreen(large);
+      prevLarge = large;
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // 當側邊欄模式啟用且有大綱時，自動展開大綱
+  useEffect(() => {
+    if (isEditorCollapsed && isLargeScreen && headings.length > 0) {
+      setIsOutlineOpen(true);
+    }
+  }, [isEditorCollapsed, isLargeScreen, headings.length]);
 
   // Dynamic import mermaid (avoid SSR crash)
   useEffect(() => {
@@ -119,63 +147,70 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, pre
     const contentEl = contentRef.current;
     if (!contentEl || !htmlContent) return;
 
-    // 等待 DOM 更新完成
-    const frameId = requestAnimationFrame(() => {
-      const headingEls = contentEl.querySelectorAll('.collapsible-heading');
-      const extracted: HeadingInfo[] = [];
-      const cleanupFns: (() => void)[] = [];
+    // 1. 同步提取 Outline 資訊並還原收合狀態
+    const headingEls = contentEl.querySelectorAll('.collapsible-heading');
+    const extracted: HeadingInfo[] = [];
 
-      headingEls.forEach((el) => {
-        const heading = el as HTMLElement;
-        const id = heading.id;
-        const level = parseInt(heading.dataset.level || '1');
-        const text = heading.textContent?.trim() || '';
+    headingEls.forEach((el) => {
+      const heading = el as HTMLElement;
+      const id = heading.id;
+      const level = parseInt(heading.dataset.level || '1');
+      const text = heading.textContent?.trim() || '';
 
-        extracted.push({ id, text, level });
+      extracted.push({ id, text, level });
 
-        // 還原收合狀態
-        if (collapsedRef.current.has(id)) {
-          heading.classList.add('collapsed');
-          const sectionEls = getSectionElements(heading, level);
-          sectionEls.forEach((el) => (el.style.display = 'none'));
-        }
-
-        // Click handler：收合/展開
-        const handleToggle = (e: Event) => {
-          if ((e.target as HTMLElement).closest('a')) return;
-
-          const isNowCollapsed = heading.classList.toggle('collapsed');
-
-          if (isNowCollapsed) {
-            collapsedRef.current.add(id);
-            const sectionEls = getSectionElements(heading, level);
-            sectionEls.forEach((el) => (el.style.display = 'none'));
-          } else {
-            collapsedRef.current.delete(id);
-            const sectionEls = getSectionElements(heading, level);
-            sectionEls.forEach((el) => (el.style.display = ''));
-
-            // 重新套用子標題的收合狀態
-            sectionEls.forEach((el) => {
-              const subMatch = el.tagName.match(/^H([1-6])$/);
-              if (subMatch && collapsedRef.current.has(el.id)) {
-                const subLevel = parseInt(subMatch[1]);
-                const subSection = getSectionElements(el, subLevel);
-                subSection.forEach((s) => (s.style.display = 'none'));
-              }
-            });
-          }
-        };
-
-        heading.addEventListener('click', handleToggle);
-        cleanupFns.push(() => heading.removeEventListener('click', handleToggle));
-      });
-
-      setHeadings(extracted);
+      // 還原收合狀態
+      if (collapsedRef.current.has(id)) {
+        heading.classList.add('collapsed');
+        const sectionEls = getSectionElements(heading, level);
+        sectionEls.forEach((sel) => (sel.style.display = 'none'));
+      } else {
+        heading.classList.remove('collapsed');
+      }
     });
 
+    setHeadings(extracted);
+
+    // 2. 使用事件代理（Event Delegation）在 contentEl 上監聽點擊，解決動態 DOM 更新導致監聽器失效的問題
+    const handleContainerClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      
+      // 尋找被點擊的 collapsible-heading
+      const heading = target.closest('.collapsible-heading') as HTMLElement | null;
+      if (!heading || !contentEl.contains(heading)) return;
+
+      // 如果點擊的是標題內的超連結，則不進行收合
+      if (target.closest('a')) return;
+
+      const id = heading.id;
+      const level = parseInt(heading.dataset.level || '1');
+
+      const isNowCollapsed = heading.classList.toggle('collapsed');
+
+      if (isNowCollapsed) {
+        collapsedRef.current.add(id);
+        const sectionEls = getSectionElements(heading, level);
+        sectionEls.forEach((el) => (el.style.display = 'none'));
+      } else {
+        collapsedRef.current.delete(id);
+        const sectionEls = getSectionElements(heading, level);
+        sectionEls.forEach((el) => (el.style.display = ''));
+
+        // 重新套用子標題的收合狀態
+        sectionEls.forEach((el) => {
+          const subMatch = el.tagName.match(/^H([1-6])$/);
+          if (subMatch && collapsedRef.current.has(el.id)) {
+            const subLevel = parseInt(subMatch[1]);
+            const subSection = getSectionElements(el, subLevel);
+            subSection.forEach((s) => (s.style.display = 'none'));
+          }
+        });
+      }
+    };
+
+    contentEl.addEventListener('click', handleContainerClick);
     return () => {
-      cancelAnimationFrame(frameId);
+      contentEl.removeEventListener('click', handleContainerClick);
     };
   }, [htmlContent]);
 
@@ -258,9 +293,9 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, pre
     }
   }, []);
 
-  // 點擊 Outline 面板外部時關閉
+  // 點擊 Outline 面板外部時關閉（僅在非側邊欄模式下生效）
   useEffect(() => {
-    if (!isOutlineOpen) return;
+    if (!isOutlineOpen || isOutlineSidebar) return;
 
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -271,7 +306,7 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, pre
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOutlineOpen]);
+  }, [isOutlineOpen, isOutlineSidebar]);
 
   return (
     <div className="relative flex h-full w-full flex-col overflow-hidden bg-[#0d1117] transition-colors duration-200">
@@ -303,9 +338,9 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, pre
       )}
 
       {code && (
-        <>
-          {/* Outline Toggle Button — 右上角小 icon */}
-          {headings.length > 0 && (
+        <div className="flex flex-1 flex-col overflow-hidden relative">
+          {/* Outline Toggle Button — 右上角小 icon (僅在非側邊欄模式下顯示) */}
+          {headings.length > 0 && !isOutlineSidebar && (
             <button
               data-outline-toggle
               onClick={() => setIsOutlineOpen((prev) => !prev)}
@@ -328,53 +363,55 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, pre
             </button>
           )}
 
-          {/* Outline Panel — 浮動面板 */}
-          <div
-            data-outline-panel
-            className={`absolute top-12 right-3 z-20 w-64 max-h-[60vh] rounded-xl bg-[#161b22]/95 backdrop-blur-xl border border-[#30363d] shadow-2xl transition-all duration-200 origin-top-right ${
-              isOutlineOpen && headings.length > 0
-                ? 'opacity-100 scale-100 pointer-events-auto'
-                : 'opacity-0 scale-95 pointer-events-none'
-            }`}
-          >
-            <div className="px-3 py-2.5 border-b border-[#30363d]">
-              <h3 className="text-xs font-semibold text-[#8b949e] uppercase tracking-wider">大綱</h3>
+          {/* Outline Panel — 浮動面板 (僅在非側邊欄模式下顯示) */}
+          {headings.length > 0 && !isOutlineSidebar && (
+            <div
+              data-outline-panel
+              className={`absolute top-12 right-3 z-20 w-64 max-h-[60vh] rounded-xl bg-[#161b22]/95 backdrop-blur-xl border border-[#30363d] shadow-2xl transition-all duration-200 origin-top-right ${
+                isOutlineOpen
+                  ? 'opacity-100 scale-100 pointer-events-auto'
+                  : 'opacity-0 scale-95 pointer-events-none'
+              }`}
+            >
+              <div className="px-3 py-2.5 border-b border-[#30363d]">
+                <h3 className="text-xs font-semibold text-[#8b949e] uppercase tracking-wider">大綱</h3>
+              </div>
+              <nav className="p-1.5 overflow-auto max-h-[calc(60vh-40px)] scrollbar-hide">
+                {headings.map((h) => {
+                  const indent = (h.level - 1) * 12;
+                  return (
+                    <button
+                      key={h.id}
+                      onClick={() => scrollToHeading(h.id)}
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm text-[#c9d1d9] hover:bg-[#21262d] hover:text-[#58a6ff] transition-colors duration-150 cursor-pointer group"
+                      style={{ paddingLeft: `${12 + indent}px` }}
+                    >
+                      <span
+                        className="h-1.5 w-1.5 rounded-full flex-shrink-0 transition-transform duration-150 group-hover:scale-125"
+                        style={{
+                          backgroundColor:
+                            h.level === 1 ? '#58a6ff' :
+                            h.level === 2 ? '#79c0ff' :
+                            h.level === 3 ? '#a371f7' :
+                            '#ffab70',
+                        }}
+                      />
+                      <span className="truncate">{h.text}</span>
+                    </button>
+                  );
+                })}
+              </nav>
             </div>
-            <nav className="p-1.5 overflow-auto max-h-[calc(60vh-40px)] scrollbar-hide">
-              {headings.map((h) => {
-                const indent = (h.level - 1) * 12;
-                return (
-                  <button
-                    key={h.id}
-                    onClick={() => scrollToHeading(h.id)}
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm text-[#c9d1d9] hover:bg-[#21262d] hover:text-[#58a6ff] transition-colors duration-150 cursor-pointer group"
-                    style={{ paddingLeft: `${12 + indent}px` }}
-                  >
-                    <span
-                      className="h-1.5 w-1.5 rounded-full flex-shrink-0 transition-transform duration-150 group-hover:scale-125"
-                      style={{
-                        backgroundColor:
-                          h.level === 1 ? '#58a6ff' :
-                          h.level === 2 ? '#79c0ff' :
-                          h.level === 3 ? '#a371f7' :
-                          '#ffab70',
-                      }}
-                    />
-                    <span className="truncate">{h.text}</span>
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
+          )}
 
-          {/* Main Content */}
+          {/* Main Scroll Content Area */}
           <div
             ref={scrollContainerRef}
             className="markdown-preview flex-1 overflow-auto p-8"
           >
             {/* Scoped Markdown Styles */}
             <style>{`
-              .markdown-preview { color: #c9d1d9; width: 100%; max-width: 80rem; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"; line-height: 1.6; }
+              .markdown-preview { color: #c9d1d9; width: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"; line-height: 1.6; }
               
               /* 繽紛標題 */
               .markdown-preview h1 { color: #58a6ff; font-weight: 800; font-size: 2.25em; margin-top: 0; margin-bottom: 16px; padding-bottom: 0.3em; border-bottom: 1px solid #30363d; }
@@ -465,9 +502,38 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, pre
               .mermaid-rendered { border: none; background: transparent; padding: 0; box-shadow: none; }
             `}</style>
 
-            <div ref={contentRef} dangerouslySetInnerHTML={{ __html: htmlContent }} />
+            <div className="flex flex-row gap-8 items-start justify-center max-w-7xl mx-auto w-full">
+              {/* Markdown Content Column */}
+              <div className="flex-1 min-w-0 max-w-4xl">
+                <div ref={contentRef} dangerouslySetInnerHTML={{ __html: htmlContent }} />
+              </div>
+
+              {/* Docusaurus-style Sticky Outline (僅在側邊欄模式下顯示) */}
+              {isOutlineSidebar && headings.length > 0 && (
+                <div className="w-60 sticky top-8 flex-shrink-0 hidden lg:block select-none">
+                  <div className="px-1 py-2 border-b border-[#30363d]/30 mb-2">
+                    <h3 className="text-xs font-semibold text-[#8b949e] uppercase tracking-wider">Content</h3>
+                  </div>
+                  <nav className="space-y-1 overflow-auto max-h-[calc(100vh-160px)] scrollbar-hide">
+                    {headings.map((h) => {
+                      const indent = (h.level - 1) * 12;
+                      return (
+                        <button
+                          key={h.id}
+                          onClick={() => scrollToHeading(h.id)}
+                          className="flex w-full items-start gap-2 rounded px-2 py-1 text-left text-xs text-[#8b949e] hover:text-[#58a6ff] transition-colors duration-150 cursor-pointer group"
+                          style={{ paddingLeft: `${indent + 8}px` }}
+                        >
+                          <span className="truncate">{h.text}</span>
+                        </button>
+                      );
+                    })}
+                  </nav>
+                </div>
+              )}
+            </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
