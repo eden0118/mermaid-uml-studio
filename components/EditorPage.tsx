@@ -100,18 +100,34 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      const content = event.target?.result as string;
+      let content = event.target?.result as string;
+      if (viewMode === 'mermaid') {
+        const trimmed = content.trim();
+        // 匹配 ```mermaid ... ``` 格式並提取出純 Mermaid 程式碼
+        const match = trimmed.match(/^```mermaid\s*([\s\S]*?)\s*```$/);
+        if (match) {
+          content = match[1];
+        }
+      }
       setCode(content);
       setPreviewCode(content);
       setFileName(file.name);
     };
     reader.readAsText(file);
     e.target.value = '';
-  }, []);
+  }, [viewMode]);
 
   // 本地檔案儲存
   const handleSaveLocal = useCallback(() => {
-    const blob = new Blob([code], { type: 'text/markdown' });
+    let finalCode = code;
+    if (viewMode === 'mermaid') {
+      const trimmed = code.trim();
+      // 若內容尚未被 ```mermaid 包住，則補上反引號區塊
+      if (!trimmed.startsWith('```mermaid') && !trimmed.endsWith('```')) {
+        finalCode = `\`\`\`mermaid\n${code}\n\`\`\``;
+      }
+    }
+    const blob = new Blob([finalCode], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -120,7 +136,7 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, [code, fileName]);
+  }, [code, fileName, viewMode]);
 
   // 模板選擇
   const handleSelectTemplate = useCallback((name: string, templateCode: string) => {
