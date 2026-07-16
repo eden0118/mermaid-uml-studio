@@ -10,7 +10,7 @@ A high-performance, all-in-one editor for Mermaid diagrams and Markdown document
 - Google Drive Connectivity: Securely save and load files directly from your Google Drive.
 - Real-time Sync: Low-latency preview updates with optional manual update mode.
 - Collapsible Editor Panel: Toggle the code editor to maximize preview area with smooth animations.
-- Collapsible Headings: Click any heading in Markdown preview to collapse/expand its section content.
+- Collapsible Headings: Click or use keyboard (`Tab` + `Enter`/`Space`) on any heading in Markdown preview to collapse/expand its section content (Fully accessible WCAG 2.1 AA).
 - Side Outline: Floating table-of-contents panel for smaller views, which automatically transitions into a clean, transparent, sticky Docusaurus-style outline on the right side of the document when the code editor is collapsed on large screens.
 - Industry Templates: One-click access to standard UML and diagram templates.
 - Advanced Customization: Fine-grained control over font size, line height, and custom CSS overrides.
@@ -64,6 +64,7 @@ mermaid-uml-studio/
 │   ├── CodeEditor.tsx  # High-performance text editor
 │   ├── MermaidPreview.tsx
 │   ├── MarkdownPreview.tsx
+│   ├── MarkdownOutline.tsx # Extracted outline rendering component
 │   └── Toolbar.tsx     # Global action bar
 ├── hooks/              # Custom React hooks
 ├── lib/                # Core logic, constants (theme, error helpers)

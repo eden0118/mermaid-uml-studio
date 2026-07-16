@@ -7,7 +7,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import CodeEditor from '@/components/CodeEditor';
@@ -15,7 +15,8 @@ import Toolbar from '@/components/Toolbar';
 import SettingsModal from '@/components/SettingsModal';
 import { getDefaultEditorConfig, getDefaultPreviewConfig } from '@/lib/theme.config';
 import { AppStatus } from '@/types/types';
-import type { Theme, EditorConfig, PreviewConfig, ViewMode } from '@/types/types';
+import { handleError, ErrorType } from '@/lib/utils';
+import type { EditorConfig, PreviewConfig, ViewMode } from '@/types/types';
 
 // 延遲載入預覽元件，減少初始 Bundle 大小
 const MermaidPreview = dynamic(() => import('@/components/MermaidPreview'), {
@@ -36,7 +37,6 @@ interface EditorPageProps {
 
 const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultFileName }) => {
   const router = useRouter();
-  const initializedRef = useRef(false);
 
   // 狀態管理
   const [code, setCode] = useState<string>(() => {
@@ -95,47 +95,59 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
 
   // 本地檔案載入
   const handleLoadLocal = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    try {
+      const file = e.target.files?.[0];
+      if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      let content = event.target?.result as string;
-      if (viewMode === 'mermaid') {
-        const trimmed = content.trim();
-        // 匹配 ```mermaid ... ``` 格式並提取出純 Mermaid 程式碼
-        const match = trimmed.match(/^```mermaid\s*([\s\S]*?)\s*```$/);
-        if (match) {
-          content = match[1];
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        let content = event.target?.result as string;
+        if (viewMode === 'mermaid') {
+          const trimmed = content.trim();
+          // 匹配 ```mermaid ... ``` 格式並提取出純 Mermaid 程式碼
+          const match = trimmed.match(/^```mermaid\s*([\s\S]*?)\s*```$/);
+          if (match) {
+            content = match[1];
+          }
         }
-      }
-      setCode(content);
-      setPreviewCode(content);
-      setFileName(file.name);
-    };
-    reader.readAsText(file);
-    e.target.value = '';
+        setCode(content);
+        setPreviewCode(content);
+        setFileName(file.name);
+      };
+      reader.onerror = () => {
+        handleError(ErrorType.FILE_READ, new Error('Failed to read file'), { context: 'FileReader' });
+      };
+      reader.readAsText(file);
+    } catch (err) {
+      handleError(ErrorType.FILE_READ, err, { context: 'handleLoadLocal' });
+    } finally {
+      e.target.value = '';
+    }
   }, [viewMode]);
 
   // 本地檔案儲存
   const handleSaveLocal = useCallback(() => {
-    let finalCode = code;
-    if (viewMode === 'mermaid') {
-      const trimmed = code.trim();
-      // 若內容尚未被 ```mermaid 包住，則補上反引號區塊
-      if (!trimmed.startsWith('```mermaid') && !trimmed.endsWith('```')) {
-        finalCode = `\`\`\`mermaid\n${code}\n\`\`\``;
+    try {
+      let finalCode = code;
+      if (viewMode === 'mermaid') {
+        const trimmed = code.trim();
+        // 若內容尚未被 ```mermaid 包住，則補上反引號區塊
+        if (!trimmed.startsWith('```mermaid') && !trimmed.endsWith('```')) {
+          finalCode = `\`\`\`mermaid\n${code}\n\`\`\``;
+        }
       }
+      const blob = new Blob([finalCode], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName.endsWith('.md') ? fileName : `${fileName}.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      handleError(ErrorType.FILE_SAVE, err, { context: 'handleSaveLocal' });
     }
-    const blob = new Blob([finalCode], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName.endsWith('.md') ? fileName : `${fileName}.md`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   }, [code, fileName, viewMode]);
 
   // 模板選擇

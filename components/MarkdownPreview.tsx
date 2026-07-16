@@ -10,18 +10,13 @@
 import React, { useEffect, useRef, useState, useCallback, memo } from 'react';
 import { marked } from 'marked';
 import { Theme, PreviewConfig } from '@/types/types';
+import MarkdownOutline, { HeadingInfo } from './MarkdownOutline';
 
 interface MarkdownPreviewProps {
   code: string;
   theme: Theme;
   previewConfig?: PreviewConfig;
   isEditorCollapsed?: boolean;
-}
-
-interface HeadingInfo {
-  id: string;
-  text: string;
-  level: number;
 }
 
 let mermaidRenderCounter = 0;
@@ -42,7 +37,7 @@ function getSectionElements(heading: Element, level: number): HTMLElement[] {
   return elements;
 }
 
-const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, previewConfig, isEditorCollapsed = false }) => {
+const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, previewConfig, isEditorCollapsed = false }) => {
   const [htmlContent, setHtmlContent] = useState<string>('');
   const [isRendering, setIsRendering] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -107,7 +102,7 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, pre
       const renderer = new marked.Renderer();
       let headingIndex = 0;
 
-      // Heading renderer: 加入 ID、data-level、toggle icon
+      // Heading renderer: 加入 ID、data-level、toggle icon 以及無障礙屬性 (a11y)
       renderer.heading = ({ text, depth }: { text: string; depth: number }) => {
         const stripped = text.replace(/<[^>]*>/g, '').trim();
         const slug = stripped
@@ -116,7 +111,8 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, pre
           .replace(/^-|-$/g, '');
         const id = `md-h-${slug || headingIndex}`;
         headingIndex++;
-        return `<h${depth} id="${id}" class="collapsible-heading" data-level="${depth}"><span class="heading-toggle-icon" aria-hidden="true"></span>${text}</h${depth}>`;
+        // 加入 tabindex="0", role="button", aria-expanded="true" 讓純鍵盤使用者也能選取與操作
+        return `<h${depth} id="${id}" class="collapsible-heading" data-level="${depth}" tabindex="0" role="button" aria-expanded="true"><span class="heading-toggle-icon" aria-hidden="true"></span>${text}</h${depth}>`;
       };
 
       renderer.code = ({ text, lang }) => {
@@ -171,11 +167,8 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, pre
 
     setHeadings(extracted);
 
-    // 2. 使用事件代理（Event Delegation）在 contentEl 上監聽點擊，解決動態 DOM 更新導致監聽器失效的問題
-    const handleContainerClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      
-      // 尋找被點擊的 collapsible-heading
+    // 2. 使用事件代理（Event Delegation）在 contentEl 上監聽點擊與鍵盤操作，支援 a11y
+    const handleHeadingToggle = (target: HTMLElement) => {
       const heading = target.closest('.collapsible-heading') as HTMLElement | null;
       if (!heading || !contentEl.contains(heading)) return;
 
@@ -186,6 +179,9 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, pre
       const level = parseInt(heading.dataset.level || '1');
 
       const isNowCollapsed = heading.classList.toggle('collapsed');
+      
+      // 更新 aria-expanded 屬性以符合無障礙規範
+      heading.setAttribute('aria-expanded', isNowCollapsed ? 'false' : 'true');
 
       if (isNowCollapsed) {
         collapsedRef.current.add(id);
@@ -208,9 +204,25 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, pre
       }
     };
 
+    const handleContainerClick = (e: MouseEvent) => {
+      handleHeadingToggle(e.target as HTMLElement);
+    };
+
+    const handleContainerKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        const target = e.target as HTMLElement;
+        if (target.closest('.collapsible-heading')) {
+          e.preventDefault();
+          handleHeadingToggle(target);
+        }
+      }
+    };
+
     contentEl.addEventListener('click', handleContainerClick);
+    contentEl.addEventListener('keydown', handleContainerKeyDown);
     return () => {
       contentEl.removeEventListener('click', handleContainerClick);
+      contentEl.removeEventListener('keydown', handleContainerKeyDown);
     };
   }, [htmlContent]);
 
@@ -257,7 +269,7 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, pre
         block.innerHTML = `<div style="color: #cf222e; padding: 0.5rem; border: 1px solid #d0d7de; border-radius: 6px; font-size: 0.875rem;">⚠ Mermaid syntax error</div>`;
       }
     }
-  }, [theme]);
+  }, []);
 
   useEffect(() => {
     if (htmlContent && mermaidLoaded) {
@@ -339,70 +351,13 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, pre
 
       {code && (
         <div className="flex flex-1 flex-col overflow-hidden relative">
-          {/* Outline Toggle Button — 右上角小 icon (僅在非側邊欄模式下顯示) */}
-          {headings.length > 0 && !isOutlineSidebar && (
-            <button
-              data-outline-toggle
-              onClick={() => setIsOutlineOpen((prev) => !prev)}
-              className={`absolute top-3 right-3 z-30 flex h-8 w-8 items-center justify-center rounded-lg border border-[#30363d] text-[#8b949e] transition-all duration-200 cursor-pointer active:scale-95 ${
-                isOutlineOpen
-                  ? 'bg-[#30363d] text-[#c9d1d9]'
-                  : 'bg-[#21262d]/80 backdrop-blur-sm hover:bg-[#30363d] hover:text-[#c9d1d9]'
-              }`}
-              title={isOutlineOpen ? '關閉大綱' : '顯示大綱'}
-              aria-label={isOutlineOpen ? '關閉大綱' : '顯示大綱'}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="8" y1="6" x2="21" y2="6" />
-                <line x1="8" y1="12" x2="21" y2="12" />
-                <line x1="8" y1="18" x2="21" y2="18" />
-                <line x1="3" y1="6" x2="3.01" y2="6" />
-                <line x1="3" y1="12" x2="3.01" y2="12" />
-                <line x1="3" y1="18" x2="3.01" y2="18" />
-              </svg>
-            </button>
-          )}
-
-          {/* Outline Panel — 浮動面板 (僅在非側邊欄模式下顯示) */}
-          {headings.length > 0 && !isOutlineSidebar && (
-            <div
-              data-outline-panel
-              className={`absolute top-12 right-3 z-20 w-64 max-h-[60vh] rounded-xl bg-[#161b22]/95 backdrop-blur-xl border border-[#30363d] shadow-2xl transition-all duration-200 origin-top-right ${
-                isOutlineOpen
-                  ? 'opacity-100 scale-100 pointer-events-auto'
-                  : 'opacity-0 scale-95 pointer-events-none'
-              }`}
-            >
-              <div className="px-3 py-2.5 border-b border-[#30363d]">
-                <h3 className="text-xs font-semibold text-[#8b949e] uppercase tracking-wider">大綱</h3>
-              </div>
-              <nav className="p-1.5 overflow-auto max-h-[calc(60vh-40px)] scrollbar-hide">
-                {headings.map((h) => {
-                  const indent = (h.level - 1) * 12;
-                  return (
-                    <button
-                      key={h.id}
-                      onClick={() => scrollToHeading(h.id)}
-                      className="flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm text-[#c9d1d9] hover:bg-[#21262d] hover:text-[#58a6ff] transition-colors duration-150 cursor-pointer group"
-                      style={{ paddingLeft: `${12 + indent}px` }}
-                    >
-                      <span
-                        className="h-1.5 w-1.5 rounded-full flex-shrink-0 transition-transform duration-150 group-hover:scale-125"
-                        style={{
-                          backgroundColor:
-                            h.level === 1 ? '#58a6ff' :
-                            h.level === 2 ? '#79c0ff' :
-                            h.level === 3 ? '#a371f7' :
-                            '#ffab70',
-                        }}
-                      />
-                      <span className="truncate">{h.text}</span>
-                    </button>
-                  );
-                })}
-              </nav>
-            </div>
-          )}
+          <MarkdownOutline 
+            headings={headings}
+            isOutlineSidebar={isOutlineSidebar}
+            isOutlineOpen={isOutlineOpen}
+            setIsOutlineOpen={setIsOutlineOpen}
+            scrollToHeading={scrollToHeading}
+          />
 
           {/* Main Scroll Content Area */}
           <div
@@ -508,29 +463,6 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, theme, pre
                 <div ref={contentRef} dangerouslySetInnerHTML={{ __html: htmlContent }} />
               </div>
 
-              {/* Docusaurus-style Sticky Outline (僅在側邊欄模式下顯示) */}
-              {isOutlineSidebar && headings.length > 0 && (
-                <div className="w-60 sticky top-8 flex-shrink-0 hidden lg:block select-none">
-                  <div className="px-1 py-2 border-b border-[#30363d]/30 mb-2">
-                    <h3 className="text-xs font-semibold text-[#8b949e] uppercase tracking-wider">Content</h3>
-                  </div>
-                  <nav className="space-y-1 overflow-auto max-h-[calc(100vh-160px)] scrollbar-hide">
-                    {headings.map((h) => {
-                      const indent = (h.level - 1) * 12;
-                      return (
-                        <button
-                          key={h.id}
-                          onClick={() => scrollToHeading(h.id)}
-                          className="flex w-full items-start gap-2 rounded px-2 py-1 text-left text-xs text-[#8b949e] hover:text-[#58a6ff] transition-colors duration-150 cursor-pointer group"
-                          style={{ paddingLeft: `${indent + 8}px` }}
-                        >
-                          <span className="truncate">{h.text}</span>
-                        </button>
-                      );
-                    })}
-                  </nav>
-                </div>
-              )}
             </div>
           </div>
         </div>

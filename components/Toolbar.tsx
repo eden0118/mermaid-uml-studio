@@ -8,8 +8,6 @@ import React, { useState } from 'react';
 import {
   Download,
   Upload,
-  Moon,
-  Sun,
   FileCode,
   CheckCircle2,
   LayoutTemplate,
@@ -18,7 +16,7 @@ import {
   Settings,
   Loader2,
 } from 'lucide-react';
-import { AppStatus, Theme, ViewMode } from '@/types/types';
+import { AppStatus, ViewMode } from '@/types/types';
 import { UML_TEMPLATES } from '@/lib/constants';
 
 interface ToolbarProps {

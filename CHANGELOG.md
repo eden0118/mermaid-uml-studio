@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Added
 
+- Accessibility (WCAG 2.1 AA): Markdown collapsible headings now support full keyboard navigation via `tabindex="0"`, `role="button"`, and `aria-expanded` attributes. Headings can be toggled using `Enter` or `Space` keys.
+- Unified error handling: Integrated `handleError` for local file read/write operations to provide consistent and user-friendly UI feedback on I/O failures.
 - Collapsible editor panel: toggle button on the editor/preview divider allows collapsing the code editor to maximize preview area, with smooth CSS transitions and chevron icon indicator.
 - Collapsible headings in Markdown preview: click any heading to collapse/expand its section content, with nested collapse state preserved across re-renders.
 - Side Outline panel: floating table-of-contents in the top-right corner of Markdown preview, with heading hierarchy, color-coded level indicators, smooth scroll navigation, and click-outside-to-close.
@@ -16,11 +18,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Changed
 
+- Architectural Refactoring: Extracted the Markdown outline panel rendering logic into a standalone `<MarkdownOutline />` component, significantly decoupling layout complexity from the main `MarkdownPreview` component.
 - Widen Markdown preview content area from `max-width: 48rem` to `max-width: 80rem` with full-width on smaller screens.
 - Wrapped Mermaid source code downloads in markdown code blocks (```mermaid ... ```) for seamless rendering in markdown viewers, while automatically stripping the code fences when reading a file in Mermaid mode.
 
 ### Fixed
 
+- Clean Architecture: Resolved all outstanding ESLint warnings across the codebase by removing unused variables (`Theme`, `initializedRef`, etc.) and fixing unnecessary React Hook dependencies for optimized performance.
 - Heading collapse event handler: refactored individual heading click listeners to use a single event delegation handler on the container, preventing listeners from getting lost during React state updates and Mermaid rendering.
 
 ## [0.3.0] - 2026-07-14
