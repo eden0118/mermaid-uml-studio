@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Fixed
 
+- Sidebar layout regression: fixed an issue where the sticky sidebar outline would render above the Markdown content on large screens instead of side-by-side, by splitting the `MarkdownOutline` component into `floating` and `sidebar` modes and rendering them in their correct structural containers.
 - Clean Architecture: Resolved all outstanding ESLint warnings across the codebase by removing unused variables (`Theme`, `initializedRef`, etc.) and fixing unnecessary React Hook dependencies for optimized performance.
 - Heading collapse event handler: refactored individual heading click listeners to use a single event delegation handler on the container, preventing listeners from getting lost during React state updates and Mermaid rendering.
 
