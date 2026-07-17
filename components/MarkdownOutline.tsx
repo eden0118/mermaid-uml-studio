@@ -12,6 +12,7 @@ interface MarkdownOutlineProps {
   isOutlineOpen: boolean;
   setIsOutlineOpen: React.Dispatch<React.SetStateAction<boolean>>;
   scrollToHeading: (id: string) => void;
+  mode: 'floating' | 'sidebar';
 }
 
 const MarkdownOutline: React.FC<MarkdownOutlineProps> = memo(({
@@ -20,13 +21,15 @@ const MarkdownOutline: React.FC<MarkdownOutlineProps> = memo(({
   isOutlineOpen,
   setIsOutlineOpen,
   scrollToHeading,
+  mode,
 }) => {
   if (headings.length === 0) return null;
 
-  return (
-    <>
-      {/* Outline Toggle Button — 右上角小 icon (僅在非側邊欄模式下顯示) */}
-      {!isOutlineSidebar && (
+  if (mode === 'floating') {
+    if (isOutlineSidebar) return null;
+    return (
+      <>
+        {/* Outline Toggle Button — 右上角小 icon (僅在非側邊欄模式下顯示) */}
         <button
           data-outline-toggle
           onClick={() => setIsOutlineOpen((prev) => !prev)}
@@ -47,10 +50,8 @@ const MarkdownOutline: React.FC<MarkdownOutlineProps> = memo(({
             <line x1="3" y1="18" x2="3.01" y2="18" />
           </svg>
         </button>
-      )}
 
       {/* Outline Panel — 浮動面板 (僅在非側邊欄模式下顯示) */}
-      {!isOutlineSidebar && (
         <div
           data-outline-panel
           className={`absolute top-12 right-3 z-20 w-64 max-h-[60vh] rounded-xl bg-[#161b22]/95 backdrop-blur-xl border border-[#30363d] shadow-2xl transition-all duration-200 origin-top-right ${
@@ -88,11 +89,14 @@ const MarkdownOutline: React.FC<MarkdownOutlineProps> = memo(({
             })}
           </nav>
         </div>
-      )}
+      </>
+    );
+  }
 
-      {/* Docusaurus-style Sticky Outline (僅在側邊欄模式下顯示) */}
-      {isOutlineSidebar && (
-        <div className="w-60 sticky top-8 flex-shrink-0 hidden lg:block select-none">
+  if (mode === 'sidebar') {
+    if (!isOutlineSidebar) return null;
+    return (
+      <div className="w-60 sticky top-8 flex-shrink-0 hidden lg:block select-none" data-outline-sidebar>
           <div className="px-1 py-2 border-b border-[#30363d]/30 mb-2">
             <h3 className="text-xs font-semibold text-[#8b949e] uppercase tracking-wider">Content</h3>
           </div>
@@ -112,9 +116,10 @@ const MarkdownOutline: React.FC<MarkdownOutlineProps> = memo(({
             })}
           </nav>
         </div>
-      )}
-    </>
-  );
+    );
+  }
+
+  return null;
 });
 
 MarkdownOutline.displayName = 'MarkdownOutline';

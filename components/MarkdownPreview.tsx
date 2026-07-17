@@ -357,6 +357,7 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, previewCon
             isOutlineOpen={isOutlineOpen}
             setIsOutlineOpen={setIsOutlineOpen}
             scrollToHeading={scrollToHeading}
+            mode="floating"
           />
 
           {/* Main Scroll Content Area */}
@@ -462,7 +463,15 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = memo(({ code, previewCon
               <div className="flex-1 min-w-0 max-w-4xl">
                 <div ref={contentRef} dangerouslySetInnerHTML={{ __html: htmlContent }} />
               </div>
-
+              
+              <MarkdownOutline 
+                headings={headings}
+                isOutlineSidebar={isOutlineSidebar}
+                isOutlineOpen={isOutlineOpen}
+                setIsOutlineOpen={setIsOutlineOpen}
+                scrollToHeading={scrollToHeading}
+                mode="sidebar"
+              />
             </div>
           </div>
         </div>
