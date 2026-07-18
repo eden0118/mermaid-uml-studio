@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Added
 
+- High-Quality PNG Export: Added a settings modal when exporting Mermaid diagrams to PNG to configure transparent backgrounds and custom padding. Fixed canvas `SecurityError` by serializing SVG to base64 Data URLs.
+- Local Theme Preview: Added an independent dark/light mode toggle within the Mermaid preview component to visualize diagrams in both environments without changing the global app theme.
 - Accessibility (WCAG 2.1 AA): Markdown collapsible headings now support full keyboard navigation via `tabindex="0"`, `role="button"`, and `aria-expanded` attributes. Headings can be toggled using `Enter` or `Space` keys.
 - Unified error handling: Integrated `handleError` for local file read/write operations to provide consistent and user-friendly UI feedback on I/O failures.
 - Collapsible editor panel: toggle button on the editor/preview divider allows collapsing the code editor to maximize preview area, with smooth CSS transitions and chevron icon indicator.

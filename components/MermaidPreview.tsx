@@ -8,7 +8,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback, memo } from 'react';
-import { ZoomIn, ZoomOut, RotateCcw, Download, AlertTriangle } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCcw, Download, AlertTriangle, Moon, Sun, Image as ImageIcon, X } from 'lucide-react';
 import { Theme } from '@/types/types';
 
 interface MermaidPreviewProps {
@@ -23,6 +23,17 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = memo(({ code, theme }) => 
   const [svgContent, setSvgContent] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [isRendering, setIsRendering] = useState(false);
+  const [localTheme, setLocalTheme] = useState<Theme>(theme);
+  
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportConfig, setExportConfig] = useState({
+    transparent: false,
+    padding: 32,
+  });
+
+  useEffect(() => {
+    setLocalTheme(theme);
+  }, [theme]);
 
   // Zoom & Pan State
   const [scale, setScale] = useState(1);
@@ -62,12 +73,13 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = memo(({ code, theme }) => 
         setIsRendering(true);
 
         // 確保在渲染前初始化正確的主題
+        const isDark = localTheme === 'dark';
         mermaidRef.current!.initialize({
           startOnLoad: false,
-          theme: 'dark',
+          theme: isDark ? 'dark' : 'default',
           securityLevel: 'loose',
           fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-          themeVariables: {
+          themeVariables: isDark ? {
             background: '#0d1117',
             primaryColor: '#1f6feb',
             primaryTextColor: '#f0f6fc',
@@ -79,6 +91,8 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = memo(({ code, theme }) => 
             noteTextColor: '#0d1117',
             errorBkgColor: '#f85149',
             errorTextColor: '#f0f6fc',
+          } : {
+            background: '#ffffff',
           }
         });
 
@@ -113,7 +127,7 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = memo(({ code, theme }) => 
     };
 
     renderDiagram();
-  }, [code, theme, mermaidLoaded]);
+  }, [code, localTheme, mermaidLoaded]);
 
   // Zoom handlers
   const handleZoomIn = useCallback(() => setScale((prev) => prev + 0.2), []);
@@ -162,8 +176,65 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = memo(({ code, theme }) => 
     URL.revokeObjectURL(url);
   }, [svgContent]);
 
+  const handleExportPngClick = useCallback(() => {
+    setShowExportModal(true);
+  }, []);
+
+  const confirmExportPng = useCallback(() => {
+    if (!svgContent) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Create a temporary canvas
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Find the svg element to get its dimensions
+    const svgEl = container.querySelector('svg');
+    if (!svgEl) return;
+
+    const bbox = svgEl.getBoundingClientRect();
+    const width = bbox.width || 800;
+    const height = bbox.height || 600;
+
+    // Increase resolution for better quality
+    const scale = 3;
+    const pad = exportConfig.padding * scale;
+    
+    canvas.width = (width * scale) + (pad * 2);
+    canvas.height = (height * scale) + (pad * 2);
+
+    // Fill background if not transparent
+    if (!exportConfig.transparent) {
+      ctx.fillStyle = localTheme === 'dark' ? '#0d1117' : '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    const img = new Image();
+    
+    // Serialize the actual SVG DOM node to string to capture all styles
+    const svgData = new XMLSerializer().serializeToString(svgEl);
+    const base64 = btoa(unescape(encodeURIComponent(svgData)));
+    const url = `data:image/svg+xml;base64,${base64}`;
+
+    img.onload = () => {
+      ctx.drawImage(img, pad, pad, width * scale, height * scale);
+
+      const a = document.createElement('a');
+      a.download = 'diagram.png';
+      a.href = canvas.toDataURL('image/png');
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      setShowExportModal(false);
+    };
+    img.src = url;
+  }, [svgContent, localTheme, exportConfig]);
+
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden bg-[#0d1117] transition-colors duration-200">
+    <div className={`relative flex h-full w-full flex-col overflow-hidden transition-colors duration-200 ${localTheme === 'dark' ? 'bg-[#0d1117]' : 'bg-white'}`}>
       {/* Dot Pattern Background */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.1]"
@@ -175,15 +246,34 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = memo(({ code, theme }) => 
 
       {/* Top Floating Toolbar */}
       <div className="absolute right-4 top-4 z-10 flex gap-2">
+        <button
+          onClick={() => setLocalTheme(prev => prev === 'dark' ? 'light' : 'dark')}
+          className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 shadow-sm transition-all hover:text-primary-600 hover:border-primary-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:text-primary-400"
+          title={localTheme === 'dark' ? '切換亮色模式' : '切換暗色模式'}
+        >
+          {localTheme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+          <span>{localTheme === 'dark' ? '暗色' : '亮色'}</span>
+        </button>
+
         {svgContent && (
-          <button
-            onClick={handleExportSvg}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 shadow-sm transition-all hover:text-primary-600 hover:border-primary-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:text-primary-400"
-            title="匯出 SVG"
-          >
-            <Download size={14} />
-            <span>SVG</span>
-          </button>
+          <>
+            <button
+              onClick={handleExportSvg}
+              className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 shadow-sm transition-all hover:text-primary-600 hover:border-primary-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:text-primary-400"
+              title="匯出 SVG"
+            >
+              <Download size={14} />
+              <span>SVG</span>
+            </button>
+            <button
+              onClick={handleExportPngClick}
+              className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 shadow-sm transition-all hover:text-primary-600 hover:border-primary-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:text-primary-400"
+              title="匯出 PNG"
+            >
+              <ImageIcon size={14} />
+              <span>PNG</span>
+            </button>
+          </>
         )}
       </div>
 
@@ -281,6 +371,70 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = memo(({ code, theme }) => 
           </button>
         </div>
       </div>
+
+      {/* Export Settings Modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl dark:bg-[#161b22] border border-gray-200 dark:border-[#30363d]">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">PNG 匯出設定</h3>
+              <button 
+                onClick={() => setShowExportModal(false)}
+                className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-[#21262d] transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            
+            <div className="space-y-5 py-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">透明背景</span>
+                <label className="relative inline-flex cursor-pointer items-center">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer" 
+                    checked={exportConfig.transparent}
+                    onChange={(e) => setExportConfig(prev => ({ ...prev, transparent: e.target.checked }))}
+                  />
+                  <div className="h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary-500 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none dark:bg-[#30363d] dark:border-[#30363d]"></div>
+                </label>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">邊距 (Padding)</span>
+                  <span className="text-xs font-mono text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-[#21262d] px-2 py-0.5 rounded">{exportConfig.padding}px</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="128" 
+                  step="16"
+                  value={exportConfig.padding}
+                  onChange={(e) => setExportConfig(prev => ({ ...prev, padding: Number(e.target.value) }))}
+                  className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 dark:bg-[#30363d] accent-primary-500 outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setShowExportModal(false)}
+                className="rounded-xl px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-[#21262d] transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={confirmExportPng}
+                className="flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition-colors shadow-sm"
+              >
+                <Download size={16} />
+                <span>確認下載</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 });

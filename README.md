@@ -5,6 +5,8 @@ A high-performance, all-in-one editor for Mermaid diagrams and Markdown document
 ## Key Features
 
 - Mermaid Diagram Studio: Comprehensive support for flowcharts, sequence diagrams, class diagrams, and more.
+- High-Quality PNG Export: Export Mermaid diagrams to PNG with customizable padding and transparent background support, alongside standard SVG export.
+- Local Theme Preview: Independent dark/light mode toggle exclusively for the Mermaid preview canvas to test diagram readability across themes.
 - Markdown Documentation: Professional editor for documentation with live, high-fidelity preview.
 - Intelligent Dark Mode: Automatic theme switching based on system preferences with manual toggle.
 - Google Drive Connectivity: Securely save and load files directly from your Google Drive.
