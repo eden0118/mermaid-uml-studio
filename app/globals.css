@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @variant dark (&:where(.dark, .dark *));
 
@@ -45,24 +45,51 @@
   --animate-pulse-soft: pulse-soft 2s ease-in-out infinite;
 
   @keyframes fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
   @keyframes slide-up {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   @keyframes slide-down {
-    from { opacity: 0; transform: translateY(-8px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   @keyframes scale-in {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
   @keyframes pulse-soft {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
   }
 }
 
@@ -75,16 +102,16 @@
     color-scheme: dark;
   }
   body {
-    @apply bg-[#0d1117] text-[#c9d1d9] min-h-screen;
+    @apply min-h-screen bg-[#0d1117] text-[#c9d1d9];
   }
 }
 
 @layer utilities {
   .glass {
-    @apply bg-[#0d1117]/80 backdrop-blur-xl border-b border-[#30363d];
+    @apply border-b border-[#30363d] bg-[#0d1117]/80 backdrop-blur-xl;
   }
   .glass-card {
-    @apply bg-[#161b22] border border-[#30363d] shadow-sm transition-all duration-300;
+    @apply border border-[#30363d] bg-[#161b22] shadow-sm transition-all duration-300;
   }
   /* Hide scrollbar */
   .scrollbar-hide {
@@ -98,17 +125,18 @@
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md font-semibold text-sm transition-all duration-200 cursor-pointer active:scale-95 border border-transparent;
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-md border border-transparent px-4 py-2 text-sm font-semibold transition-all duration-200 active:scale-95;
   }
   .btn-primary {
-    @apply bg-[#2ea44f] text-white hover:bg-[#2c974b] border-[#1b1f2326] shadow-sm;
+    @apply border-[#1b1f2326] bg-[#2ea44f] text-white shadow-sm hover:bg-[#2c974b];
   }
   .btn-secondary {
-    @apply bg-[#21262d] text-[#c9d1d9] hover:bg-[#30363d] border-[#f0f6fc1a];
+    @apply border-[#f0f6fc1a] bg-[#21262d] text-[#c9d1d9] hover:bg-[#30363d];
   }
 }
 
 /* 額外修正：確保 CodeEditor 在切換時有正確背景 */
-textarea, .line-numbers {
+textarea,
+.line-numbers {
   @apply bg-[#0d1117] text-[#c9d1d9] transition-colors duration-200;
 }

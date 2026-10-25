@@ -73,10 +73,7 @@ export const handleError = (
   logError(type, error, context);
 
   // 取得錯誤訊息
-  const errorMessage = getErrorMessage(
-    type,
-    error instanceof Error ? error.message : undefined
-  );
+  const errorMessage = getErrorMessage(type, error instanceof Error ? error.message : undefined);
 
   // 顯示通知
   if (showAlert) {

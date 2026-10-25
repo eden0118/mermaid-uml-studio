@@ -22,7 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 - Architectural Refactoring: Extracted the Markdown outline panel rendering logic into a standalone `<MarkdownOutline />` component, significantly decoupling layout complexity from the main `MarkdownPreview` component.
 - Widen Markdown preview content area from `max-width: 48rem` to `max-width: 80rem` with full-width on smaller screens.
-- Wrapped Mermaid source code downloads in markdown code blocks (```mermaid ... ```) for seamless rendering in markdown viewers, while automatically stripping the code fences when reading a file in Mermaid mode.
+- Wrapped Mermaid source code downloads in markdown code blocks (`mermaid ... `) for seamless rendering in markdown viewers, while automatically stripping the code fences when reading a file in Mermaid mode.
 
 ### Fixed
 

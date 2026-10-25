@@ -1,0 +1,89 @@
+MIT License
+
+Copyright (c) 2026 Eden (Mermaid UML Studio Authors)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+================================================================================
+Third-Party Software Notices and Acknowledgements
+================================================================================
+
+This project incorporates components and dependencies from various open-source
+projects. We gratefully acknowledge the creators and contributors of the
+following open-source software:
+
+1. Next.js
+   - License: MIT License
+   - Copyright (c) 2026 Vercel, Inc.
+   - Project URL: https://nextjs.org / https://github.com/vercel/next.js
+   - Description: React 網頁應用程式開發框架與 App Router 架構。
+
+2. React & React DOM
+   - License: MIT License
+   - Copyright (c) Meta Platforms, Inc. and affiliates.
+   - Project URL: https://react.dev / https://github.com/facebook/react
+   - Description: 用於構建使用者介面的核心宣告式元件化庫。
+
+3. Pele
+   - License: MIT License
+   - Copyright (c) Tony Grosinger, Steph Ango (kepano), and contributors
+   - Project URL: https://pele.run / https://github.com/tonyg/pele
+   - Description: 輕量、高效能且支援 CSS 主題變數的 Mermaid SVG 渲染引擎。
+
+4. Mermaid.js
+   - License: MIT License
+   - Copyright (c) Knut Sveidqvist and contributors
+   - Project URL: https://mermaid.js.org / https://github.com/mermaid-js/mermaid
+   - Description: 基於文字語法的圖表生成工具與解析規範。
+
+5. Marked
+   - License: MIT License
+   - Copyright (c) 2011-2026, Christopher Jeffrey (https://github.com/chjj/)
+   - Project URL: https://marked.js.org / https://github.com/markedjs/marked
+   - Description: 高效能、符合標準的 Markdown 解析與編譯器。
+
+6. Lucide React
+   - License: ISC License
+   - Copyright (c) 2022 Lucide Contributors
+   - Project URL: https://lucide.dev / https://github.com/lucide-icons/lucide
+   - Description: 簡約乾淨的一致性圖標庫。
+
+7. Tailwind CSS & PostCSS
+   - License: MIT License
+   - Copyright (c) Tailwind Labs, Inc.
+   - Project URL: https://tailwindcss.com / https://github.com/tailwindlabs/tailwindcss
+   - Description: 現代化實用類別優先（utility-first）的 CSS 樣式框架。
+
+8. TypeScript
+   - License: Apache License 2.0
+   - Copyright (c) Microsoft Corporation
+   - Project URL: https://www.typescriptlang.org / https://github.com/microsoft/TypeScript
+   - Description: 提供靜態型別安全與優異開發體驗的程式語言。
+
+9. ESLint
+   - License: MIT License
+   - Copyright (c) OpenJS Foundation and other contributors, <www.openjsf.org>
+   - Project URL: https://eslint.org / https://github.com/eslint/eslint
+   - Description: JavaScript 與 TypeScript 的靜態程式碼檢查與品質分析工具。
+
+10. Prettier
+    - License: MIT License
+    - Copyright (c) James Long and contributors
+    - Project URL: https://prettier.io / https://github.com/prettier/prettier
+    - Description: 程式碼語法風格統一格式化工具。

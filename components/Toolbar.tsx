@@ -53,7 +53,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
   const modeLabel = viewMode === 'mermaid' ? 'Mermaid' : 'Markdown';
 
   return (
-    <div className="glass relative z-20 flex h-14 shrink-0 items-center justify-between px-4 transition-all duration-300" role="toolbar" aria-label="編輯器工具列">
+    <div
+      className="glass relative z-20 flex h-14 shrink-0 items-center justify-between px-4 transition-all duration-300"
+      role="toolbar"
+      aria-label="編輯器工具列"
+    >
       {/* Left Section */}
       <div className="flex items-center gap-3">
         {/* Home Button */}
@@ -63,17 +67,23 @@ const Toolbar: React.FC<ToolbarProps> = ({
           title="返回首頁"
           aria-label="返回首頁"
         >
-          <Home size={16} className="transition-transform group-hover:scale-110" aria-hidden="true" />
+          <Home
+            size={16}
+            className="transition-transform group-hover:scale-110"
+            aria-hidden="true"
+          />
         </button>
 
         <div className="h-5 w-px bg-gray-200 dark:bg-gray-800" aria-hidden="true" />
 
         {/* Mode Label */}
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
+          <div className="bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400 flex h-7 w-7 items-center justify-center rounded-md">
             <FileCode size={14} aria-hidden="true" />
           </div>
-          <span className="text-xs font-bold tracking-tight text-gray-900 dark:text-white">{modeLabel}</span>
+          <span className="text-xs font-bold tracking-tight text-gray-900 dark:text-white">
+            {modeLabel}
+          </span>
         </div>
 
         <div className="h-5 w-px bg-gray-200 dark:bg-gray-800" aria-hidden="true" />
@@ -84,7 +94,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <div className="relative">
               <button
                 onClick={() => setShowTemplates(!showTemplates)}
-                className="btn btn-secondary !px-2.5 !py-1.5 !text-xs !gap-1.5 min-w-[80px]"
+                className="btn btn-secondary min-w-[80px] !gap-1.5 !px-2.5 !py-1.5 !text-xs"
                 aria-label="選擇模板"
                 aria-expanded={showTemplates}
                 aria-haspopup="true"
@@ -100,8 +110,16 @@ const Toolbar: React.FC<ToolbarProps> = ({
 
               {showTemplates && (
                 <>
-                  <div className="fixed inset-0 z-10" onClick={() => setShowTemplates(false)} aria-hidden="true" />
-                  <div className="animate-slide-down absolute left-0 top-full z-20 mt-1.5 w-52 overflow-hidden rounded-xl border border-gray-200 bg-white p-1.5 shadow-xl dark:border-gray-700 dark:bg-gray-800" role="menu" aria-label="模板選單">
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowTemplates(false)}
+                    aria-hidden="true"
+                  />
+                  <div
+                    className="animate-slide-down absolute top-full left-0 z-20 mt-1.5 w-52 overflow-hidden rounded-xl border border-gray-200 bg-white p-1.5 shadow-xl dark:border-gray-700 dark:bg-gray-800"
+                    role="menu"
+                    aria-label="模板選單"
+                  >
                     {UML_TEMPLATES.map((t) => (
                       <button
                         key={t.name}
@@ -109,7 +127,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                           onSelectTemplate(t.name, t.code);
                           setShowTemplates(false);
                         }}
-                        className="w-full rounded-lg px-3 py-2 text-left text-xs font-medium text-gray-600 transition-colors hover:bg-primary-50 hover:text-primary-600 dark:text-gray-300 dark:hover:bg-primary-900/20 dark:hover:text-primary-400"
+                        className="hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-primary-900/20 dark:hover:text-primary-400 w-full rounded-lg px-3 py-2 text-left text-xs font-medium text-gray-600 transition-colors dark:text-gray-300"
                         role="menuitem"
                       >
                         {t.name}
@@ -137,7 +155,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             aria-hidden="true"
           >
             <div
-              className={`absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-white shadow-sm transition-transform duration-200 ${autoUpdate ? 'translate-x-3' : 'translate-x-0'}`}
+              className={`absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white shadow-sm transition-transform duration-200 ${autoUpdate ? 'translate-x-3' : 'translate-x-0'}`}
             />
           </div>
           <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">即時</span>
@@ -152,7 +170,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             type="text"
             value={fileName}
             onChange={(e) => setFileName(e.target.value)}
-            className="w-36 bg-transparent py-1 text-xs font-medium text-gray-600 outline-none transition-colors focus:text-primary-600 dark:text-gray-400 dark:focus:text-primary-400"
+            className="focus:text-primary-600 dark:focus:text-primary-400 w-36 bg-transparent py-1 text-xs font-medium text-gray-600 transition-colors outline-none dark:text-gray-400"
             aria-label="檔案名稱"
             placeholder="未命名檔案"
           />
@@ -163,9 +181,15 @@ const Toolbar: React.FC<ToolbarProps> = ({
       <div className="flex items-center gap-2">
         {/* Status Indicators */}
         {status === AppStatus.SAVING && (
-          <div className="flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-1 dark:bg-primary-900/20">
-            <Loader2 size={12} className="animate-spin text-primary-500" />
-            <span className="text-[10px] font-semibold text-primary-600 dark:text-primary-400" role="status" aria-live="polite">儲存中</span>
+          <div className="bg-primary-50 dark:bg-primary-900/20 flex items-center gap-1.5 rounded-full px-2.5 py-1">
+            <Loader2 size={12} className="text-primary-500 animate-spin" />
+            <span
+              className="text-primary-600 dark:text-primary-400 text-[10px] font-semibold"
+              role="status"
+              aria-live="polite"
+            >
+              儲存中
+            </span>
           </div>
         )}
         {status === AppStatus.SUCCESS && (
@@ -186,17 +210,27 @@ const Toolbar: React.FC<ToolbarProps> = ({
         </button>
 
         {/* File Actions Group */}
-        <div className="flex items-center gap-0.5 rounded-lg bg-gray-100 p-0.5 dark:bg-gray-800/50" role="group" aria-label="檔案操作">
+        <div
+          className="flex items-center gap-0.5 rounded-lg bg-gray-100 p-0.5 dark:bg-gray-800/50"
+          role="group"
+          aria-label="檔案操作"
+        >
           <label
-            className="cursor-pointer rounded-md p-1.5 text-gray-500 transition-colors hover:bg-white hover:text-primary-600 hover:shadow-sm dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-primary-400"
+            className="hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer rounded-md p-1.5 text-gray-500 transition-colors hover:bg-white hover:shadow-sm dark:text-gray-400 dark:hover:bg-gray-700"
             title="開啟 .md 檔案"
           >
             <Upload size={15} aria-hidden="true" />
-            <input type="file" accept=".md,.txt" onChange={onLoadLocal} className="hidden" aria-label="上傳檔案" />
+            <input
+              type="file"
+              accept=".md,.txt"
+              onChange={onLoadLocal}
+              className="hidden"
+              aria-label="上傳檔案"
+            />
           </label>
           <button
             onClick={onSaveLocal}
-            className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-white hover:text-primary-600 hover:shadow-sm dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-primary-400"
+            className="hover:text-primary-600 dark:hover:text-primary-400 rounded-md p-1.5 text-gray-500 transition-colors hover:bg-white hover:shadow-sm dark:text-gray-400 dark:hover:bg-gray-700"
             title="儲存為 .md"
             aria-label="下載檔案"
           >

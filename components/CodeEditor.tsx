@@ -40,29 +40,32 @@ const CodeEditor: React.FC<CodeEditorProps> = memo(
     }, []);
 
     // 鍵盤快捷鍵：Tab 插入空格
-    const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === 'Tab') {
-        e.preventDefault();
-        const { selectionStart, selectionEnd } = e.currentTarget;
-        const newValue =
-          value.substring(0, selectionStart) + '  ' + value.substring(selectionEnd);
-        onChange(newValue);
-        // 設定游標位置
-        requestAnimationFrame(() => {
-          if (textareaRef.current) {
-            textareaRef.current.selectionStart = textareaRef.current.selectionEnd =
-              selectionStart + 2;
-          }
-        });
-      }
-    }, [value, onChange]);
+    const handleKeyDown = useCallback(
+      (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          const { selectionStart, selectionEnd } = e.currentTarget;
+          const newValue =
+            value.substring(0, selectionStart) + '  ' + value.substring(selectionEnd);
+          onChange(newValue);
+          // 設定游標位置
+          requestAnimationFrame(() => {
+            if (textareaRef.current) {
+              textareaRef.current.selectionStart = textareaRef.current.selectionEnd =
+                selectionStart + 2;
+            }
+          });
+        }
+      },
+      [value, onChange]
+    );
 
     return (
       <div className="relative flex h-full w-full overflow-hidden bg-white dark:bg-[#0d1117]">
         {/* 行號顯示 */}
         <div
           ref={lineNumbersRef}
-          className="w-12 shrink-0 select-none overflow-hidden border-r border-gray-200 bg-[#f6f8fa] py-4 pr-3 text-right font-mono text-gray-400 transition-colors duration-200 dark:border-gray-800 dark:bg-[#161b22] dark:text-gray-500 scrollbar-hide"
+          className="scrollbar-hide w-12 shrink-0 overflow-hidden border-r border-gray-200 bg-[#f6f8fa] py-4 pr-3 text-right font-mono text-gray-400 transition-colors duration-200 select-none dark:border-gray-800 dark:bg-[#161b22] dark:text-gray-500"
           style={{
             lineHeight: config.lineHeight,
             fontSize: `${config.fontSize}px`,
@@ -70,14 +73,16 @@ const CodeEditor: React.FC<CodeEditorProps> = memo(
           aria-hidden="true"
         >
           {Array.from({ length: lineCount }, (_, i) => (
-            <div key={i + 1} className="px-1">{i + 1}</div>
+            <div key={i + 1} className="px-1">
+              {i + 1}
+            </div>
           ))}
         </div>
 
         {/* 文字編輯區 */}
         <textarea
           ref={textareaRef}
-          className="h-full flex-1 resize-none bg-transparent p-4 text-[#24292f] outline-none transition-colors duration-200 dark:text-[#c9d1d9] overflow-y-auto scrollbar-hide"
+          className="scrollbar-hide h-full flex-1 resize-none overflow-y-auto bg-transparent p-4 text-[#24292f] transition-colors duration-200 outline-none dark:text-[#c9d1d9]"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onScroll={handleScroll}

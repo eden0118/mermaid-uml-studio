@@ -63,7 +63,7 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
   // 防抖處理預覽更新
   useEffect(() => {
     if (!autoUpdate) return;
-    
+
     const timer = setTimeout(() => {
       setPreviewCode(code);
     }, 300); // 300ms 延遲
@@ -94,36 +94,41 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
   }, [code]);
 
   // 本地檔案載入
-  const handleLoadLocal = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      const file = e.target.files?.[0];
-      if (!file) return;
+  const handleLoadLocal = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      try {
+        const file = e.target.files?.[0];
+        if (!file) return;
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        let content = event.target?.result as string;
-        if (viewMode === 'mermaid') {
-          const trimmed = content.trim();
-          // 匹配 ```mermaid ... ``` 格式並提取出純 Mermaid 程式碼
-          const match = trimmed.match(/^```mermaid\s*([\s\S]*?)\s*```$/);
-          if (match) {
-            content = match[1];
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          let content = event.target?.result as string;
+          if (viewMode === 'mermaid') {
+            const trimmed = content.trim();
+            // 匹配 ```mermaid ... ``` 格式並提取出純 Mermaid 程式碼
+            const match = trimmed.match(/^```mermaid\s*([\s\S]*?)\s*```$/);
+            if (match) {
+              content = match[1];
+            }
           }
-        }
-        setCode(content);
-        setPreviewCode(content);
-        setFileName(file.name);
-      };
-      reader.onerror = () => {
-        handleError(ErrorType.FILE_READ, new Error('Failed to read file'), { context: 'FileReader' });
-      };
-      reader.readAsText(file);
-    } catch (err) {
-      handleError(ErrorType.FILE_READ, err, { context: 'handleLoadLocal' });
-    } finally {
-      e.target.value = '';
-    }
-  }, [viewMode]);
+          setCode(content);
+          setPreviewCode(content);
+          setFileName(file.name);
+        };
+        reader.onerror = () => {
+          handleError(ErrorType.FILE_READ, new Error('Failed to read file'), {
+            context: 'FileReader',
+          });
+        };
+        reader.readAsText(file);
+      } catch (err) {
+        handleError(ErrorType.FILE_READ, err, { context: 'handleLoadLocal' });
+      } finally {
+        e.target.value = '';
+      }
+    },
+    [viewMode]
+  );
 
   // 本地檔案儲存
   const handleSaveLocal = useCallback(() => {
@@ -159,7 +164,7 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
 
   return (
     <div className="flex h-screen flex-col bg-[#0d1117] transition-colors duration-300">
-      <div className="flex flex-1 overflow-hidden relative">
+      <div className="relative flex flex-1 overflow-hidden">
         {/* 左側：編輯器 */}
         <div
           className={`relative z-10 flex flex-col border-r border-[#30363d] bg-[#0d1117] transition-all duration-300 ease-in-out ${
@@ -182,7 +187,7 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
           />
 
           <div className="flex-1 overflow-hidden p-3">
-            <div className="h-full rounded-xl overflow-hidden border border-[#30363d]">
+            <div className="h-full overflow-hidden rounded-xl border border-[#30363d]">
               <CodeEditor
                 value={code}
                 onChange={handleCodeChange}
@@ -197,7 +202,7 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
         {/* 收合/展開按鈕 */}
         <button
           onClick={() => setIsEditorCollapsed((prev) => !prev)}
-          className="absolute top-1/2 z-20 flex h-16 w-5 -translate-y-1/2 cursor-pointer items-center justify-center rounded-r-md bg-[#21262d] border border-l-0 border-[#30363d] text-[#8b949e] hover:bg-[#30363d] hover:text-[#c9d1d9] transition-all duration-200 hover:w-6 active:scale-95"
+          className="absolute top-1/2 z-20 flex h-16 w-5 -translate-y-1/2 cursor-pointer items-center justify-center rounded-r-md border border-l-0 border-[#30363d] bg-[#21262d] text-[#8b949e] transition-all duration-200 hover:w-6 hover:bg-[#30363d] hover:text-[#c9d1d9] active:scale-95"
           style={{ left: isEditorCollapsed ? 0 : 'calc(50% - 1px)' }}
           title={isEditorCollapsed ? '展開編輯器' : '收合編輯器'}
           aria-label={isEditorCollapsed ? '展開編輯器' : '收合編輯器'}
