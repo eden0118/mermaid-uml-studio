@@ -25,9 +25,10 @@ import { Theme } from '@/types/types';
 interface MermaidPreviewProps {
   code: string;
   theme: Theme;
+  onErrorLine?: (line: number | null) => void;
 }
 
-const MermaidPreview: React.FC<MermaidPreviewProps> = memo(({ code, theme }) => {
+const MermaidPreview: React.FC<MermaidPreviewProps> = memo(({ code, theme, onErrorLine }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [svgContent, setSvgContent] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
@@ -105,12 +106,14 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = memo(({ code, theme }) => 
     if (!trimmed) {
       setSvgContent('');
       setError(null);
+      onErrorLine?.(null);
       hasFittedRef.current = false;
       return;
     }
 
     try {
       setError(null);
+      onErrorLine?.(null);
       setIsRendering(true);
 
       const result = peleRender(trimmed);
@@ -127,6 +130,7 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = memo(({ code, theme }) => 
     } catch (err: unknown) {
       let msg = '語法錯誤：無效的 Mermaid 代碼';
       if (err instanceof PeleError) {
+        onErrorLine?.(err.line || null);
         msg = err.line
           ? `第 ${err.line} 行${err.column ? ` 第 ${err.column} 欄` : ''}：${err.message}`
           : err.message;
@@ -134,13 +138,16 @@ const MermaidPreview: React.FC<MermaidPreviewProps> = memo(({ code, theme }) => 
           msg += `\n${err.snippet}`;
         }
       } else if (err instanceof Error) {
+        onErrorLine?.(null);
         msg = err.message;
+      } else {
+        onErrorLine?.(null);
       }
       setError(msg);
     } finally {
       setIsRendering(false);
     }
-  }, [code, fitToView]);
+  }, [code, fitToView, onErrorLine]);
 
   // Zoom handlers
   const handleZoomIn = useCallback(() => setScale((prev) => prev + 0.2), []);

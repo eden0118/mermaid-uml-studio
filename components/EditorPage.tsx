@@ -38,24 +38,78 @@ interface EditorPageProps {
 const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultFileName }) => {
   const router = useRouter();
 
-  // 狀態管理
+  // 狀態管理：直接於初始化時安全讀取本機草稿
   const [code, setCode] = useState<string>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(`draft_${viewMode}`);
-      return saved || defaultCode;
+      try {
+        const saved = localStorage.getItem(`draft_${viewMode}`);
+        if (saved) return saved;
+      } catch {
+        // 忽略讀取錯誤
+      }
     }
     return defaultCode;
   });
   const [previewCode, setPreviewCode] = useState<string>(code);
   const [selectedTemplateName, setSelectedTemplateName] = useState<string>('');
+  const [errorLine, setErrorLine] = useState<number | null>(null);
 
   // 編輯器面板收合狀態
   const [isEditorCollapsed, setIsEditorCollapsed] = useState(false);
 
+  // 配置管理：直接於初始化時恢復使用者偏好設定
+  const [editorConfig, setEditorConfig] = useState<EditorConfig>(() => {
+    const defaultConfig = getDefaultEditorConfig();
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('editor_config');
+        if (saved) return { ...defaultConfig, ...JSON.parse(saved) };
+      } catch {
+        // 忽略解析錯誤
+      }
+    }
+    return defaultConfig;
+  });
+
+  const [previewConfig, setPreviewConfig] = useState<PreviewConfig>(() => {
+    const defaultConfig = getDefaultPreviewConfig();
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('preview_config');
+        if (saved) return { ...defaultConfig, ...JSON.parse(saved) };
+      } catch {
+        // 忽略解析錯誤
+      }
+    }
+    return defaultConfig;
+  });
+
   // 自動儲存草稿
   useEffect(() => {
-    localStorage.setItem(`draft_${viewMode}`, code);
+    try {
+      localStorage.setItem(`draft_${viewMode}`, code);
+    } catch {
+      // 忽略儲存錯誤
+    }
   }, [code, viewMode]);
+
+  // 自動持久化編輯器與預覽設定
+  useEffect(() => {
+    try {
+      localStorage.setItem('editor_config', JSON.stringify(editorConfig));
+    } catch {
+      // 忽略儲存錯誤
+    }
+  }, [editorConfig]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('preview_config', JSON.stringify(previewConfig));
+    } catch {
+      // 忽略儲存錯誤
+    }
+  }, [previewConfig]);
+
   const [fileName, setFileName] = useState<string>(defaultFileName);
   const [autoUpdate, setAutoUpdate] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -70,10 +124,6 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
 
     return () => clearTimeout(timer);
   }, [code, autoUpdate]);
-
-  // 配置管理
-  const [editorConfig, setEditorConfig] = useState<EditorConfig>(getDefaultEditorConfig());
-  const [previewConfig, setPreviewConfig] = useState<PreviewConfig>(getDefaultPreviewConfig());
 
   // 包裝 setCode
   const handleCodeChange = useCallback((newCode: string) => {
@@ -155,6 +205,26 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
     }
   }, [code, fileName, viewMode]);
 
+  // 全域快捷鍵：Cmd+S 儲存、Cmd+B 收合展開
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      const isMac =
+        typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.userAgent);
+      const modifier = isMac ? e.metaKey : e.ctrlKey;
+
+      if (modifier && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        handleSaveLocal();
+      } else if (modifier && (e.key === 'b' || e.key === 'B')) {
+        e.preventDefault();
+        setIsEditorCollapsed((prev) => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [handleSaveLocal]);
+
   // 模板選擇
   const handleSelectTemplate = useCallback((name: string, templateCode: string) => {
     setCode(templateCode);
@@ -194,6 +264,7 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
                 placeholder={`輸入 ${viewMode === 'mermaid' ? 'Mermaid 語法' : 'Markdown 內容'}...`}
                 config={editorConfig}
                 ariaLabel={`${viewMode === 'mermaid' ? 'Mermaid' : 'Markdown'} 編輯器`}
+                errorLine={errorLine}
               />
             </div>
           </div>
@@ -229,7 +300,7 @@ const EditorPage: React.FC<EditorPageProps> = ({ viewMode, defaultCode, defaultF
         >
           <div className="h-full w-full overflow-hidden">
             {viewMode === 'mermaid' ? (
-              <MermaidPreview code={previewCode} theme="dark" />
+              <MermaidPreview code={previewCode} theme="dark" onErrorLine={setErrorLine} />
             ) : (
               <MarkdownPreview
                 code={previewCode}

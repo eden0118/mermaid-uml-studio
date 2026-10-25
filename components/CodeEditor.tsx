@@ -16,10 +16,11 @@ interface CodeEditorProps {
   placeholder?: string;
   config: EditorConfig;
   ariaLabel?: string;
+  errorLine?: number | null;
 }
 
 const CodeEditor: React.FC<CodeEditorProps> = memo(
-  ({ value, onChange, placeholder, config, ariaLabel }) => {
+  ({ value, onChange, placeholder, config, ariaLabel, errorLine }) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const lineNumbersRef = useRef<HTMLDivElement>(null);
     const [lineCount, setLineCount] = useState(1);
@@ -39,22 +40,30 @@ const CodeEditor: React.FC<CodeEditorProps> = memo(
       }
     }, []);
 
-    // 鍵盤快捷鍵：Tab 插入空格
+    // 鍵盤快捷鍵：Tab 插入空格 (優先使用 execCommand 保留瀏覽器 Undo 堆疊)
     const handleKeyDown = useCallback(
       (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Tab') {
           e.preventDefault();
-          const { selectionStart, selectionEnd } = e.currentTarget;
-          const newValue =
-            value.substring(0, selectionStart) + '  ' + value.substring(selectionEnd);
-          onChange(newValue);
-          // 設定游標位置
-          requestAnimationFrame(() => {
-            if (textareaRef.current) {
-              textareaRef.current.selectionStart = textareaRef.current.selectionEnd =
-                selectionStart + 2;
-            }
-          });
+          const textarea = textareaRef.current;
+          if (!textarea) return;
+
+          let inserted = false;
+          try {
+            inserted = document.execCommand('insertText', false, '  ');
+          } catch {
+            inserted = false;
+          }
+
+          if (!inserted) {
+            const { selectionStart, selectionEnd } = textarea;
+            const newValue =
+              value.substring(0, selectionStart) + '  ' + value.substring(selectionEnd);
+            onChange(newValue);
+            requestAnimationFrame(() => {
+              textarea.selectionStart = textarea.selectionEnd = selectionStart + 2;
+            });
+          }
         }
       },
       [value, onChange]
@@ -72,11 +81,23 @@ const CodeEditor: React.FC<CodeEditorProps> = memo(
           }}
           aria-hidden="true"
         >
-          {Array.from({ length: lineCount }, (_, i) => (
-            <div key={i + 1} className="px-1">
-              {i + 1}
-            </div>
-          ))}
+          {Array.from({ length: lineCount }, (_, i) => {
+            const lineNum = i + 1;
+            const isError = errorLine === lineNum;
+            return (
+              <div
+                key={lineNum}
+                className={`px-1 transition-colors ${
+                  isError
+                    ? 'rounded-sm bg-red-500/20 font-bold text-red-500 dark:bg-red-900/40 dark:text-red-400'
+                    : ''
+                }`}
+                title={isError ? `第 ${lineNum} 行語法錯誤` : undefined}
+              >
+                {lineNum}
+              </div>
+            );
+          })}
         </div>
 
         {/* 文字編輯區 */}
